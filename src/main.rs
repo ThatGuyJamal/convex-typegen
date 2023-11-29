@@ -295,28 +295,34 @@ fn process_ast(ast: &Value) -> Vec<Table> {
                                                                             .unwrap()
                                                                             .to_string();
 
-                                                                        println!(
-                                                                            "Key: {}",
-                                                                            key);
+                                                                        println!("Key: {}", key);
 
-                                                                        let value = arg.get("value")
-                                                                        .and_then(|v| v.get("callee"))
-                                                                        .and_then(|p| p.get("property"))
-                                                                        .and_then(|n| n.get("name"))
-                                                                        .and_then(|n| n.as_str())
-                                                                        .unwrap()
-                                                                        .to_string();
+                                                                        let value = arg
+                                                                            .get("value")
+                                                                            .and_then(|v| {
+                                                                                v.get("callee")
+                                                                            })
+                                                                            .and_then(|p| {
+                                                                                p.get("property")
+                                                                            })
+                                                                            .and_then(|n| {
+                                                                                n.get("name")
+                                                                            })
+                                                                            .and_then(|n| {
+                                                                                n.as_str()
+                                                                            })
+                                                                            .unwrap()
+                                                                            .to_string();
 
                                                                         println!(
                                                                             "Value: {}",
-                                                                            value);
+                                                                            value
+                                                                        );
 
                                                                         object_type_map.insert(
                                                                             key,
                                                                             Type::from_str(
-                                                                                &value,
-                                                                                None,
-                                                                                None,
+                                                                                &value, None, None,
                                                                                 None,
                                                                             ),
                                                                         );
@@ -333,9 +339,7 @@ fn process_ast(ast: &Value) -> Vec<Table> {
                                                                     &col_v_type,
                                                                     None,
                                                                     None,
-                                                                    Some(
-                                                                        object_type_map,
-                                                                    ),
+                                                                    Some(object_type_map),
                                                                 )
                                                             },
                                                         };
