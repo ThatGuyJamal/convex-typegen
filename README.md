@@ -4,6 +4,10 @@ and ease of use, when using in other type strict language its a pain to have you
 database schema in two places. So I wrote a parser that will take the typescript
 schema and generate rust code that can be used in your rust project.
 
+## Installation
+
+todo
+
 ## Usage
 
 _This does not work yet_
