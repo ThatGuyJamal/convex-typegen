@@ -119,16 +119,16 @@ fn main() {
     let ret = Parser::new(&allocator, &schema_content, source_type).parse();
 
     if ret.errors.is_empty() {
-        // let ast = serde_json::to_string_pretty(&ret.program).unwrap();
-        let ast = serde_json::to_string(&ret.program).unwrap();
+        let ast = serde_json::to_string_pretty(&ret.program).unwrap();
+        // let ast = serde_json::to_string(&ret.program).unwrap();
 
-        // println!("{}", ast);
+        println!("{}", ast);
 
         let ast: Value = serde_json::from_str(&ast).unwrap();
 
         let tables = process_ast(&ast);
 
-        println!("{:#?}", tables);
+        // println!("{:#?}", tables);
 
         // generate_rust_types(tables);
 
@@ -354,7 +354,7 @@ fn process_ast(ast: &Value) -> Vec<Table> {
                                                             .unwrap()
                                                             .to_string();
 
-                                                        println!("Col Name: {}", col_name);
+                                                        // println!("Col Name: {}", col_name);
 
                                                         if let Some(id_args) = data
                                                             .get("value")
