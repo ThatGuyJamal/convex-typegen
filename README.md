@@ -1,4 +1,4 @@
-Here you will find my custom rust parser for [ConvexDB](). The TLDr is the
+Here you will find my custom rust parser for [ConvexDB](https://www.convex.dev). The TLDr is the
 convex schema is defined in a typescript file, and while convenient for development
 and ease of use, when using in other type strict language its a pain to have your
 database schema in two places. So I wrote a parser that will take the typescript
