@@ -45,14 +45,41 @@ struct Column {
 /// 
 /// The Null type is also an official convex type.
 enum Type {
+    /// The table Id type
+    Id(String),
     String,
-    Int(i64),
-    Float(f64),
-    Bool(bool),
-    Bytes(Vec<u8>),
-    Array(Vec<Type>),
-    Object(Vec<(String, Type)>),
+    Int64,
+    Float64,
+    Bool,
+    // Vec<u8>
+    Bytes,
+    // Vec<Type>
+    Array,
+    Object,
     Null,
+}
+
+impl Type {
+    fn from_str(s: &str, table_name: Option<String>) -> Type {
+        match s {
+            "v.id()" => {
+                if let Some(table_name) = table_name {
+                    Type::Id(table_name)
+                } else {
+                    panic!("Table name is require for id type.")
+                }
+            }
+            "v.int64()" => Type::Int64,
+            "v.float64()" => Type::Float64,
+            "v.bool()" => Type::Bool,
+            "v.string()" => Type::String,
+            "v.array()" => Type::Array,
+            "v.bytes()" => Type::Bytes,
+            "v.object()" => Type::Object,
+            "v.null()" => Type::Null,
+            _ => panic!("Invalid type found in schema."),
+        }
+    }
 }
 
 fn main() {
