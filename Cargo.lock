@@ -56,8 +56,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "convex-rust-schema-parser"
-version = "0.1.0"
+name = "convex-schema-parser"
+version = "0.0.1"
 dependencies = [
  "oxc",
  "serde_json",

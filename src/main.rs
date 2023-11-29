@@ -78,8 +78,7 @@ impl Type {
                 if let Some(table_name) = table_name {
                     Type::Id(table_name)
                 } else {
-                    // panic!("Table name is require for id type.")
-                    Type::Id("".to_string())
+                    panic!("Table name is require for id type.")
                 }
             }
             "int64" => Type::Int64,
@@ -295,7 +294,7 @@ fn process_ast(ast: &Value) -> Vec<Table> {
                                                                             .unwrap()
                                                                             .to_string();
 
-                                                                        println!("Key: {}", key);
+                                                                        // println!("Key: {}", key);
 
                                                                         let value = arg
                                                                             .get("value")
@@ -314,10 +313,10 @@ fn process_ast(ast: &Value) -> Vec<Table> {
                                                                             .unwrap()
                                                                             .to_string();
 
-                                                                        println!(
-                                                                            "Value: {}",
-                                                                            value
-                                                                        );
+                                                                        // println!(
+                                                                        //     "Value: {}",
+                                                                        //     value
+                                                                        // );
 
                                                                         object_type_map.insert(
                                                                             key,
@@ -346,11 +345,53 @@ fn process_ast(ast: &Value) -> Vec<Table> {
 
                                                         // add the column to the current table
                                                         columns.push(column);
-                                                    }
-                                                    // else if col_v_type == "id" {
-                                                    //     todo!("Id type not yet supported.")
-                                                    // }
-                                                    else {
+                                                    } else if col_v_type == "id" {
+                                                        // get the name of the table that the id references
+                                                        let col_name = data
+                                                            .get("key")
+                                                            .and_then(|k| k.get("name"))
+                                                            .and_then(|n| n.as_str())
+                                                            .unwrap()
+                                                            .to_string();
+
+                                                        println!("Col Name: {}", col_name);
+
+                                                        if let Some(id_args) = data
+                                                            .get("value")
+                                                            .and_then(|c| c.get("arguments"))
+                                                            .and_then(|c| c.as_array())
+                                                        {
+                                                            for id_arg in id_args {
+                                                                // get the name of the id argument
+                                                                let id_arg_name = id_arg
+                                                                    .get("value")
+                                                                    .and_then(|n| n.as_str())
+                                                                    .unwrap()
+                                                                    .to_string();
+
+                                                                // println!(
+                                                                //     "Id Arg Name: {}",
+                                                                //     id_arg_name
+                                                                // );
+
+                                                                // create the column
+                                                                let column = Column {
+                                                                    name: col_name.clone(),
+                                                                    col_type: {
+                                                                        Type::from_str(
+                                                                            &col_v_type,
+                                                                            Some(id_arg_name),
+                                                                            None,
+                                                                            None,
+                                                                        )
+                                                                    },
+                                                                };
+
+                                                                // add the column to the current table
+                                                                columns.push(column);
+                                                            }
+                                                        }
+                                                    } else {
                                                         // create the column
                                                         let column = Column {
                                                             name: col_name,

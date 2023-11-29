@@ -1,6 +1,6 @@
 [package]
-name = "convex-rust-schema-parser"
-version = "0.1.0"
+name = "convex-schema-parser"
+version = "0.0.1"
 edition = "2021"
 
 [dependencies]
