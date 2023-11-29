@@ -19,43 +19,6 @@ use oxc::span::SourceType;
 /// The schema of the database
 struct Schema {
     tables: Vec<Table>,
-    indexes: Vec<Index>,
-}
-
-/// An index in the schema
-struct Index {
-    /// The table the index belongs to
-    /// ```ts
-    /// messages: defineTable({
-    ///  channel: v.id("channels")
-    /// })
-    /// .index("by_channel", ["channel"])
-    /// ```
-    /// In this example, the table name is "messages"
-    table: String,
-    /// The name of the index
-    /// Example:
-    /// Example:
-    /// ```ts
-    /// messages: defineTable({
-    ///  channel: v.id("channels")
-    /// })
-    /// .index("by_channel", ["channel"])
-    /// ```
-    ///
-    /// In this example, the index name is "by_channel"
-    name: String,
-    /// The columns that are mapped to the index
-    /// Example:
-    /// ```ts
-    /// messages: defineTable({
-    ///  channel: v.id("channels")
-    /// })
-    /// .index("by_channel", ["channel"])
-    /// ```
-    ///
-    /// In this example, the index columns are ["channel"]
-    columns: Vec<Column>,
 }
 
 /// A table in the schema
