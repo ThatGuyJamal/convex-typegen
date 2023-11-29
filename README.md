@@ -65,8 +65,8 @@ In the [debug](./debug) folder you can see the steps I took to learn how to pars
 A list of things todo in the future for this project.
 
 - [x] Parse typescript schema and generate AST
+- [ ] Add support for convex schema types: object, id
 - [ ] Generate rust code from AST
-- [ ] Add support for convex schema types: object, id, null
 - [ ] Add error handling to parser
 - [ ] Add tests
 - [ ] Make the cli file paths optional/configurable

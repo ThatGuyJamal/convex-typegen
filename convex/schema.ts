@@ -3,9 +3,17 @@
 export default defineSchema({
 	users: defineTable({
 		email: v.string(),
-		password: v.string(),
 		isAdmin: v.boolean(),
-		// add more fields here
+		age: v.number(),
+		binary: v.bytes(),
 		customers: v.array(v.string()),
+		isNull: v.null(),
+		// not supported yet
+		obj: v.object({
+			foo: v.string(),
+			bar: v.number(),
+		}),
+		// not supported yet
+		// post: v.id('posts'),
 	}).index('by_email', ['email']),
 });

@@ -54,7 +54,8 @@ enum Type {
     Id(String),
     String,
     Int64,
-    Float64,
+    // f64
+    Number,
     Bool,
     // Vec<u8>
     Bytes,
@@ -75,7 +76,7 @@ impl Type {
                 }
             }
             "int64" => Type::Int64,
-            "float64" => Type::Float64,
+            "number" => Type::Number,
             "boolean" => Type::Bool,
             "string" => Type::String,
             "array" => {
