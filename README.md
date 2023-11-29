@@ -1,12 +1,13 @@
-Here you will find my custom rust parser for [ConvexDB](). The TLDr is the 
+Here you will find my custom rust parser for [ConvexDB](). The TLDr is the
 convex schema is defined in a typescript file, and while convenient for development
-and ease of use, when using in other type strict language its a pain to have your 
+and ease of use, when using in other type strict language its a pain to have your
 database schema in two places. So I wrote a parser that will take the typescript
 schema and generate rust code that can be used in your rust project.
 
 ## Usage
 
-*This does not work yet*
+_This does not work yet_
+
 ```bash
 convexdb-schema-parser <schema.ts> <models.rs>
 ```
@@ -15,21 +16,20 @@ convexdb-schema-parser <schema.ts> <models.rs>
 
 ```typescript
 // schema.ts
-import { defineSchema, defineTable } from "convex/server";
-import { v } from "convex/values";
+import { defineSchema, defineTable } from 'convex/server';
+import { v } from 'convex/values';
 
-// Define a messages table with two indexes.
 export default defineSchema({
-  messages: defineTable({
-    channel: v.id("channels"),
-    body: v.string(),
-    user: v.id("users"),
-  })
-    .index("by_channel", ["channel"])
-    .index("by_channel_user", ["channel", "user"]),
+	messages: defineTable({
+		channel: v.id('channels'),
+		body: v.string(),
+		user: v.id('users'),
+	}).index('by_channel', ['channel']),
 });
 ```
+
 will generate:
+
 ```rust
 // models.rs
 struct Messages {
@@ -39,7 +39,12 @@ struct Messages {
 }
 ```
 
-This is just an example, im still in the process of developing the logic so 
+Indexes don't really have any type information, so they will be ignored for now.
+Index are useful inside of convex functions but not the return types themselves (to my knowledge).
+
+So the only data we generally need is the data inside of the `defineSchema` object.
+
+This is just an example, im still in the process of developing the logic so
 this will evolve over time. However, here is the general idea.
 
 ## Todo
