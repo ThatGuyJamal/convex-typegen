@@ -37,9 +37,9 @@ will generate:
 ```rust
 // models.rs
 struct Messages {
-    channel: String,
     body: String,
-    user: i64,
+    channel: ConvexId("channels"),
+    user: ConvexId("users"),
 }
 ```
 
