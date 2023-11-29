@@ -48,8 +48,15 @@ Index are useful inside of convex functions but not the return types themselves 
 
 So the only data we generally need is the data inside of the `defineSchema` object.
 
+## How this works?
+
 This is just an example, im still in the process of developing the logic so
 this will evolve over time. However, here is the general idea.
+
+The underlining logic is that we are parsing the typescript file into an AST
+and then generating rust code from that AST. The AST is a tree structure that
+represents the typescript file. So we can traverse the tree and generate rust
+code from it. The AST is generated using the [Oxc](https://docs.rs/oxc/latest/oxc/index.html) library. This amazing library did most of the heavy lifting for me!
 
 ## Todo
 
@@ -57,6 +64,7 @@ A list of things todo in the future for this project.
 
 - [x] Parse typescript schema and generate AST
 - [ ] Generate rust code from AST
+- [ ] Add support for all optional convex types
 - [ ] Add error handling to parser
 - [ ] Add tests
 - [ ] Make the cli file paths optional/configurable
