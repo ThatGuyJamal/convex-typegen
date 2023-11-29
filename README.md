@@ -66,10 +66,10 @@ A list of things todo in the future for this project.
 
 - [x] Parse typescript schema and generate AST
 - [x] Add support for convex schema types: object, id
-- [ ] Add support for nested objects and arrays
+- [ ] Add full support for all convex schema types
+- [ ] Add tests
 - [ ] Generate rust code from AST
 - [ ] Add error handling to parser
-- [ ] Add tests
 - [ ] Make the cli file paths optional/configurable
 
 ## Contributing
