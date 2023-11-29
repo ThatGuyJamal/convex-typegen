@@ -9,15 +9,9 @@ export default defineSchema({
 		customers: v.array(v.string()),
 		isNull: v.null(),
 		obj: v.object({
-			foo: v.string(),
-			bar: v.number(),
+			foo: v.number(),
+			bar: v.string(),
 		}),
 		post: v.id('posts'),
-		// todo - implement support
-		// arr_post: v.array(v.id('posts_arr')),
-		// obj_post: v.object({
-		// 	foo: v.string(),
-		// 	bar: v.id('posts_obj'),
-		// }),
 	}).index('by_email', ['email']),
 });
