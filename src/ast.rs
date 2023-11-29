@@ -43,6 +43,17 @@ pub(crate) enum Type {
 }
 
 impl Type {
+    /// Convert an ast parsed string to a valid type
+    /// 
+    /// `s` is the string to convert
+    /// 
+    /// `table_name` is the name of the table the type is in. This is required for the id type.
+    /// 
+    /// `array_type` is the type of the array. This is required for the array type.
+    /// 
+    /// `object_type` is the type of the object. This is required for the object type.
+    /// 
+    /// Returns the matched `Type` enum
     pub(crate) fn from_str(
         s: &str,
         table_name: Option<String>,

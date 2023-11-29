@@ -4,20 +4,30 @@ use serde_json::Value;
 
 use crate::ast::{Column, Table, Type};
 
-/// The schema of the database
+/// A parser for the AST
+/// 
+/// `ast` is the AST to parse
 #[derive(Debug)]
 pub(crate) struct ASTParser<'a> {
     ast: &'a Value,
 }
 
 impl<'a> ASTParser<'a> {
+    /// Create a new ASTParser
+    /// 
+    /// `ast` is the AST to parse
+    /// 
+    /// Returns the created ASTParser
     pub(crate) fn new(ast: &'a Value) -> Self {
         Self { ast }
     }
 
+    /// Parses the AST
     pub(crate) fn parse(&self) -> Vec<Table> {
         let mut tables = Vec::new();
 
+        // Most of the important data in the ast is under all these json objects so we simply parse them and loop through
+        // there properties to get the data we need.
         if let Some(body) = self.ast.get("body").and_then(|b| b.as_array()) {
             for item in body {
                 if let Some(export_default) = item.get("declaration") {
@@ -41,6 +51,11 @@ impl<'a> ASTParser<'a> {
         tables
     }
 
+    /// Parses a table from the AST
+    /// 
+    /// `properties` is the properties of the table
+    /// 
+    /// Returns the parsed table or None if no table was found
     fn parse_table(&self, properties: &[Value]) -> Option<Table> {
         for prop in properties {
             let table_name = prop
@@ -63,6 +78,11 @@ impl<'a> ASTParser<'a> {
         None
     }
 
+    /// Parses the columns of a table from the AST
+    /// 
+    /// `value` is the value of the table
+    /// 
+    /// Returns the parsed columns or None if no columns were found
     fn parse_columns(&self, value: &Value) -> Option<Vec<Column>> {
         let mut columns = Vec::new();
         if let Some(callee) = value.get("callee").and_then(|k| {
@@ -107,6 +127,15 @@ impl<'a> ASTParser<'a> {
         Some(columns)
     }
 
+    /// Parses an array column from the AST
+    /// 
+    /// `c_name` is the name of the column
+    /// 
+    /// `c_type` is the type of the column
+    /// 
+    /// `data` is the ast data of the column
+    /// 
+    /// Returns the parsed column or None if no column was found
     fn parse_array_column(&self, c_name: String, c_type: String, data: &Value) -> Option<Column> {
         if let Some(col_array_type_data) = data
             .get("value")
@@ -141,6 +170,15 @@ impl<'a> ASTParser<'a> {
         None
     }
 
+    /// Parses an object column from the AST
+    /// 
+    /// `c_name` is the name of the column
+    /// 
+    /// `c_type` is the type of the column
+    /// 
+    /// `data` is the ast data of the column
+    /// 
+    /// Returns the parsed column or None if no column was found
     fn parse_object_column(&self, c_name: String, c_type: String, data: &Value) -> Option<Column> {
         let mut object_type_map: HashMap<String, Type> = HashMap::new();
 
@@ -192,6 +230,13 @@ impl<'a> ASTParser<'a> {
         None
     }
 
+    /// Parses an id column from the AST
+    /// 
+    /// `c_type` is the type of the column
+    /// 
+    /// `data` is the ast data of the column
+    /// 
+    /// Returns the parsed column or None if no column was found
     fn parse_id_column(&self, c_type: String, data: &Value) -> Option<Column> {
         // get the name of the table that the id references
         let col_name = data
@@ -226,6 +271,17 @@ impl<'a> ASTParser<'a> {
         None
     }
 
+    /// Parses all other columns from the AST
+    /// 
+    /// These are basic types that don't have deep nesting (strings, numbers, booleans, etc)
+    /// 
+    /// `c_name` is the name of the column
+    /// 
+    /// `c_type` is the type of the column
+    /// 
+    /// `data` is the ast data of the column
+    /// 
+    /// Returns the parsed column or None if no column was found
     fn parse_default_column(&self, c_name: String, c_type: String, data: &Value) -> Option<Column> {
         let column = Column {
             name: c_name,

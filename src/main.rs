@@ -55,7 +55,11 @@ fn main() {
         }
     }
 }
-
+/// Read the contents of a file into a string.
+/// 
+/// `file_path` is the path to the file.
+/// 
+/// Returns a `Result` with the contents of the file as a `String`.
 fn read_file_contents(file_path: &str) -> Result<String, std::io::Error> {
     let mut file = File::open(file_path)?;
     let mut contents = String::new();
@@ -63,6 +67,9 @@ fn read_file_contents(file_path: &str) -> Result<String, std::io::Error> {
     Ok(contents)
 }
 
+/// Generate Rust Types from the AST
+/// 
+/// `tables` is a vector of `Table` AST nodes.
 fn generate_rust_types(tables: Vec<Table>) {
     todo!()
 }
