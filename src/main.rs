@@ -59,29 +59,35 @@ enum Type {
     // Vec<u8>
     Bytes,
     // Vec<Type>
-    Array,
+    Array(Box<Type>),
     Object,
     Null,
 }
 
 impl Type {
-    fn from_str(s: &str, table_name: Option<String>) -> Type {
+    fn from_str(s: &str, table_name: Option<String>, array_type: Option<Type>) -> Type {
         match s {
-            "v.id()" => {
+            "id" => {
                 if let Some(table_name) = table_name {
                     Type::Id(table_name)
                 } else {
                     panic!("Table name is require for id type.")
                 }
             }
-            "v.int64()" => Type::Int64,
-            "v.float64()" => Type::Float64,
-            "v.bool()" => Type::Bool,
-            "v.string()" => Type::String,
-            "v.array()" => Type::Array,
-            "v.bytes()" => Type::Bytes,
-            "v.object()" => Type::Object,
-            "v.null()" => Type::Null,
+            "int64" => Type::Int64,
+            "float64" => Type::Float64,
+            "boolean" => Type::Bool,
+            "string" => Type::String,
+            "array" => {
+                if let Some(at) = array_type {
+                    Type::Array(Box::new(at))
+                } else {
+                    panic!("Array type is required for array type.")
+                }
+            }
+            "bytes" => Type::Bytes,
+            "object" => Type::Object,
+            "null" => Type::Null,
             _ => panic!("Invalid type found in schema."),
         }
     }
@@ -129,57 +135,151 @@ fn read_file_contents(file_path: &str) -> Result<String, std::io::Error> {
     Ok(contents)
 }
 
+/// Process the AST and extract the tables from the schema
+///
+/// `ast` A Json value representing the AST
+///
+/// Returns a vector of tables in the schema
 fn process_ast(ast: &Value) -> Vec<Table> {
+    // store all the tables here
     let mut tables = Vec::new();
 
+    // the ast generates an array of json objects in the body
+    // we need to iterate over each object and find the items to select out of the json
     if let Some(body) = ast.get("body").and_then(|b| b.as_array()) {
         for item in body {
             if let Some(export_default) = item.get("declaration") {
                 if let Some(arguments) = export_default.get("arguments").and_then(|a| a.as_array())
                 {
+                    // the 'properties' array contains most of the useful information about the tables we need
                     for arg in arguments {
                         if let Some(properties) = arg.get("properties").and_then(|p| p.as_array()) {
+                            // println!("Properties: {:?}", properties); // Add this line for debugging
+
                             for prop in properties {
-                                if let Some(table_name) = prop
+                                // println!("Property: {:?}", prop); // Add this line for debugging
+
+                                // the 'key' field contains the name of the table
+                                let table_name = prop
                                     .get("key")
                                     .and_then(|k| k.get("name"))
                                     .and_then(|n| n.as_str())
-                                {
-                                    if let Some(table_values) = prop
-                                        .get("value")
-                                        .and_then(|v| v.get("arguments"))
-                                        .and_then(|a| a.as_array())
-                                    {
-                                        let mut columns = Vec::new();
-                                        for table_value in table_values {
-                                            if let Some(column_name) = table_value
-                                                .get("key")
-                                                .and_then(|k| k.get("name"))
-                                                .and_then(|n| n.as_str())
+                                    .unwrap()
+                                    .to_string();
+
+                                // println!("Table Name: {}", table_name); // Add this line for debugging
+
+                                let mut columns = Vec::new();
+
+                                if let Some(value) = prop.get("value") {
+                                    // println!("Value: {:?}", value); // Add this line for debugging
+
+                                    // get the 'callee' field object
+                                    if let Some(callee) = value.get("callee").and_then(|k| {
+                                        k.get("object").and_then(|k| {
+                                            k.get("arguments").and_then(|p| p.as_array())
+                                        })
+                                    }) {
+                                        // println!("Callee arguments: {:?}", callee); // Add this line for debugging
+
+                                        // iterate over the arguments.properties of callee to get the column names and types
+                                        for callee_props in callee {
+                                            if let Some(arg) = callee_props
+                                                .get("properties")
+                                                .and_then(|p| p.as_array())
                                             {
-                                                if let Some(column_type_str) = table_value
-                                                    .get("value")
-                                                    .and_then(|v| v.get("callee"))
-                                                    .and_then(|c| c.get("name"))
-                                                    .and_then(|n| n.as_str())
-                                                {
-                                                    let column_type = Type::from_str(
-                                                        column_type_str,
-                                                        Some(table_name.to_string()),
-                                                    );
-                                                    columns.push(Column {
-                                                        name: column_name.to_string(),
-                                                        col_type: column_type,
-                                                    });
+                                                // println!("Arg: {:?}", arg); // Add this line for debugging
+
+                                                for data in arg {
+                                                    let col_name = data
+                                                        .get("key")
+                                                        .and_then(|k| k.get("name"))
+                                                        .and_then(|n| n.as_str())
+                                                        .unwrap()
+                                                        .to_string();
+
+                                                    // println!("Column Name: {}", col_name);
+
+                                                    // the convex v type
+                                                    let col_v_type = data
+                                                        .get("value")
+                                                        .and_then(|v| v.get("callee"))
+                                                        .and_then(|v| v.get("property"))
+                                                        .and_then(|p| p.get("name"))
+                                                        .and_then(|n| n.as_str())
+                                                        .unwrap()
+                                                        .to_string();
+
+                                                    println!("Column V Type: {}", col_v_type);
+
+                                                    if col_v_type == "array" {
+                                                        // the convex v type
+                                                        if let Some(col_array_type_data) = data
+                                                            .get("value")
+                                                            .and_then(|v| v.get("arguments"))
+                                                            .and_then(|a| a.as_array())
+                                                        {
+                                                            for cad in col_array_type_data {
+                                                                let nested_col_type = cad
+                                                                    .get("callee")
+                                                                    .and_then(|c| c.get("property"))
+                                                                    .and_then(|c| c.get("name"))
+                                                                    .and_then(|n| n.as_str())
+                                                                    .unwrap()
+                                                                    .to_string();
+
+                                                                println!(
+                                                                    "Nested Column Array Type: {}",
+                                                                    nested_col_type
+                                                                );
+
+                                                                let column = Column {
+                                                                    name: col_name.clone(),
+                                                                    col_type: {
+                                                                        Type::from_str(
+                                                                            &col_v_type,
+                                                                            None,
+                                                                            Some(
+                                                                                Type::from_str(
+                                                                                    &nested_col_type,
+                                                                                    None,
+                                                                                    None,
+                                                                                ),
+                                                                            ),
+                                                                        )
+                                                                    },
+                                                                };
+
+                                                                columns.push(column);
+                                                            }
+                                                        }
+                                                    } else {
+                                                        // create the column
+                                                        let column = Column {
+                                                            name: col_name,
+                                                            col_type: {
+                                                                Type::from_str(
+                                                                    &col_v_type,
+                                                                    None,
+                                                                    None,
+                                                                )
+                                                            },
+                                                        };
+
+                                                        columns.push(column);
+                                                    }
                                                 }
                                             }
                                         }
-                                        tables.push(Table {
-                                            name: table_name.to_string(),
-                                            columns,
-                                        });
                                     }
                                 }
+
+                                let table = Table {
+                                    name: table_name,
+                                    columns: columns,
+                                };
+
+                                tables.push(table);
                             }
                         }
                     }

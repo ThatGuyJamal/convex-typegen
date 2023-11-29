@@ -58,13 +58,15 @@ and then generating rust code from that AST. The AST is a tree structure that
 represents the typescript file. So we can traverse the tree and generate rust
 code from it. The AST is generated using the [Oxc](https://docs.rs/oxc/latest/oxc/index.html) library. This amazing library did most of the heavy lifting for me!
 
+In the [debug](./debug) folder you can see the steps I took to learn how to parse the AST json. It took hours! But I finally for it working!
+
 ## Todo
 
 A list of things todo in the future for this project.
 
 - [x] Parse typescript schema and generate AST
 - [ ] Generate rust code from AST
-- [ ] Add support for all optional convex types
+- [ ] Add support for convex schema types: object, id, null
 - [ ] Add error handling to parser
 - [ ] Add tests
 - [ ] Make the cli file paths optional/configurable

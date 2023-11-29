@@ -1,0 +1,212 @@
+{
+  {
+    "computed": false,
+    "end": 169,
+    "init": null,
+    "key": {
+      "end": 52,
+      "name": "users",
+      "start": 47,
+      "type": "IdentifierName"
+    },
+    "kind": "init",
+    "method": false,
+    "shorthand": false,
+    "start": 47,
+    "type": "ObjectProperty",
+    "value": {
+      "arguments": [
+        {
+          "end": 157,
+          "start": 147,
+          "type": "StringLiteral",
+          "value": "by_email"
+        },
+        {
+          "elements": [
+            {
+              "end": 167,
+              "start": 160,
+              "type": "StringLiteral",
+              "value": "email"
+            }
+          ],
+          "end": 168,
+          "start": 159,
+          "trailing_comma": null,
+          "type": "ArrayExpression"
+        }
+      ],
+      "callee": {
+        "end": 146,
+        "object": {
+          "arguments": [
+            {
+              "end": 139,
+              "properties": [
+                {
+                  "computed": false,
+                  "end": 87,
+                  "init": null,
+                  "key": {
+                    "end": 75,
+                    "name": "email",
+                    "start": 70,
+                    "type": "IdentifierName"
+                  },
+                  "kind": "init",
+                  "method": false,
+                  "shorthand": false,
+                  "start": 70,
+                  "type": "ObjectProperty",
+                  "value": {
+                    "arguments": [],
+                    "callee": {
+                      "end": 87,
+                      "object": {
+                        "end": 78,
+                        "name": "v",
+                        "start": 77,
+                        "type": "IdentifierReference"
+                      },
+                      "optional": false,
+                      "property": {
+                        "end": 85,
+                        "name": "string",
+                        "start": 79,
+                        "type": "IdentifierName"
+                      },
+                      "start": 77,
+                      "type": "StaticMemberExpression"
+                    },
+                    "end": 87,
+                    "optional": false,
+                    "start": 77,
+                    "type": "CallExpression",
+                    "typeParameters": null
+                  }
+                },
+                {
+                  "computed": false,
+                  "end": 111,
+                  "init": null,
+                  "key": {
+                    "end": 99,
+                    "name": "password",
+                    "start": 91,
+                    "type": "IdentifierName"
+                  },
+                  "kind": "init",
+                  "method": false,
+                  "shorthand": false,
+                  "start": 91,
+                  "type": "ObjectProperty",
+                  "value": {
+                    "arguments": [],
+                    "callee": {
+                      "end": 109,
+                      "object": {
+                        "end": 102,
+                        "name": "v",
+                        "start": 101,
+                        "type": "IdentifierReference"
+                      },
+                      "optional": false,
+                      "property": {
+                        "end": 109,
+                        "name": "string",
+                        "start": 103,
+                        "type": "IdentifierName"
+                      },
+                      "start": 101,
+                      "type": "StaticMemberExpression"
+                    },
+                    "end": 111,
+                    "optional": false,
+                    "start": 101,
+                    "type": "CallExpression",
+                    "typeParameters": null
+                  }
+                },
+                {
+                  "computed": false,
+                  "end": 135,
+                  "init": null,
+                  "key": {
+                    "end": 122,
+                    "name": "isAdmin",
+                    "start": 115,
+                    "type": "IdentifierName"
+                  },
+                  "kind": "init",
+                  "method": false,
+                  "shorthand": false,
+                  "start": 115,
+                  "type": "ObjectProperty",
+                  "value": {
+                    "arguments": [],
+                    "callee": {
+                      "end": 133,
+                      "object": {
+                        "end": 125,
+                        "name": "v",
+                        "start": 124,
+                        "type": "IdentifierReference"
+                      },
+                      "optional": false,
+                      "property": {
+                        "end": 133,
+                        "name": "boolean",
+                        "start": 126,
+                        "type": "IdentifierName"
+                      },
+                      "start": 124,
+                      "type": "StaticMemberExpression"
+                    },
+                    "end": 135,
+                    "optional": false,
+                    "start": 124,
+                    "type": "CallExpression",
+                    "typeParameters": null
+                  }
+                }
+              ],
+              "start": 66,
+              "trailing_comma": {
+                "end": 135,
+                "start": 135
+              },
+              "type": "ObjectExpression"
+            }
+          ],
+          "callee": {
+            "end": 65,
+            "name": "defineTable",
+            "start": 54,
+            "type": "IdentifierReference"
+          },
+          "end": 140,
+          "optional": false,
+          "start": 54,
+          "type": "CallExpression",
+          "typeParameters": null
+        },
+        "end": 169,
+        "optional": false,
+        "property": {
+          "end": 146,
+          "name": "index",
+          "start": 141,
+          "type": "IdentifierName"
+        },
+        "start": 54,
+        "type": "StaticMemberExpression"
+      },
+      "end": 169,
+      "optional": false,
+      "start": 54,
+      "type": "CallExpression",
+      "typeParameters": null
+    }
+  }
+}
