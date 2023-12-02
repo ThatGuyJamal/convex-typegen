@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 /// A table in the schema
 #[derive(Debug)]
 pub(crate) struct ConvexTable {
@@ -10,7 +8,7 @@ pub(crate) struct ConvexTable {
 /// A convex database function
 pub(crate) struct ConvexFunction {
     /// The file the function is defined in
-    namespace: String,
+    pub(crate) namespace: String,
     /// The name of the function itself
-    name: String,
+    pub(crate) name: String,
 }

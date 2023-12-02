@@ -1,6 +1,6 @@
-#![allow(dead_code)]
-#![allow(unused_imports)]
-#![allow(unused_variables)]
+// #![allow(dead_code)]
+// #![allow(unused_imports)]
+// #![allow(unused_variables)]
 
 // A Rust Type Generator for the ConvexDB Schema
 //
@@ -8,8 +8,8 @@
 // the database can be used in a type-safe manner in rust.
 
 mod ast;
-mod parser;
 mod codegen;
+mod parser;
 
 use std::collections::HashMap;
 use std::env;
@@ -17,15 +17,20 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use crate::ast::ConvexTable;
-use crate::codegen::SchemeBuilderData;
-
 use oxc::allocator::Allocator;
 use oxc::parser::Parser;
 use oxc::span::SourceType;
 use serde_json::Value;
 
+use crate::codegen::SchemeBuilderData;
+
+// example user of our library
 fn main() {
+    generate_types();
+}
+
+// The only function exported from the library. (+Types)
+pub fn generate_types() {
     let schema_ts_file = env::args()
         .nth(1)
         .unwrap_or_else(|| "./convex/schema.ts".to_string());
@@ -65,11 +70,6 @@ fn main() {
     }
 }
 
-/// Read the contents of a file into a string.
-///
-/// `file_path` is the path to the file.
-///
-/// Returns a `Result` with the contents of the file as a `String`.
 fn read_file_contents(file_path: &str) -> Result<String, std::io::Error> {
     let mut file = File::open(file_path)?;
     let mut contents = String::new();

@@ -6,7 +6,7 @@ use crate::parser::ConvexSchema;
 #[derive(Debug)]
 pub struct BuilderConfig {
     /// The bath to the convex directory
-    path: PathBuf,
+    pub path: PathBuf,
 }
 
 impl Default for BuilderConfig {
@@ -26,9 +26,9 @@ pub(crate) struct SchemeBuilderData {
 }
 
 #[derive(Debug)]
-pub struct Builder<'a> {
-    data: &'a SchemeBuilderData,
-    config: BuilderConfig,
+pub(crate) struct Builder<'a> {
+    pub(crate) data: &'a SchemeBuilderData,
+    pub(crate) config: BuilderConfig,
 }
 
 impl<'a> Builder<'a> {
