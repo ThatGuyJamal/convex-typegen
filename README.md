@@ -10,11 +10,7 @@ todo
 
 ## Usage
 
-_This does not work yet_
-
-```bash
-convexdb-schema-parser <schema.ts> <models.rs>
-```
+todo
 
 ## Example
 
@@ -42,11 +38,6 @@ struct Messages {
     user: ConvexId("users"),
 }
 ```
-
-Indexes don't really have any type information, so they will be ignored for now.
-Index are useful inside of convex functions but not the return types themselves (to my knowledge).
-
-So the only data we generally need is the data inside of the `defineSchema` object.
 
 ## How this works?
 
@@ -99,6 +90,10 @@ import { defineSchema, defineTable } from 'convex/server';
 export default defineSchema({
 	willError: defineTable({
 		data: v.array(v.array(v.array(v.string()))),
+		data: v.array(v.object({
+			foo: v.string(),
+			bar: v.array(v.string())
+		})),
 		data: v.object({
 			foo: v.string(),
 			bar: v.array(v.string())

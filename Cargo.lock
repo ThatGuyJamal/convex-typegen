@@ -56,7 +56,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "convex-schema-parser"
+name = "convex-parser"
 version = "0.0.1"
 dependencies = [
  "oxc",
