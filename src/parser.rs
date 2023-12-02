@@ -5,7 +5,7 @@ use serde_json::Value;
 use crate::ast::{Column, Table, Type};
 
 /// A parser for the AST
-/// 
+///
 /// `ast` is the AST to parse
 #[derive(Debug)]
 pub(crate) struct ASTParser<'a> {
@@ -14,9 +14,9 @@ pub(crate) struct ASTParser<'a> {
 
 impl<'a> ASTParser<'a> {
     /// Create a new ASTParser
-    /// 
+    ///
     /// `ast` is the AST to parse
-    /// 
+    ///
     /// Returns the created ASTParser
     pub(crate) fn new(ast: &'a Value) -> Self {
         Self { ast }
@@ -52,9 +52,9 @@ impl<'a> ASTParser<'a> {
     }
 
     /// Parses a table from the AST
-    /// 
+    ///
     /// `properties` is the properties of the table
-    /// 
+    ///
     /// Returns the parsed table or None if no table was found
     fn parse_table(&self, properties: &[Value]) -> Option<Table> {
         for prop in properties {
@@ -79,26 +79,27 @@ impl<'a> ASTParser<'a> {
     }
 
     /// Parses the columns of a table from the AST
-    /// 
+    ///
     /// `value` is the value of the table
-    /// 
+    ///
     /// Returns the parsed columns or None if no columns were found
     fn parse_columns(&self, value: &Value) -> Option<Vec<Column>> {
         let mut columns = Vec::new();
+
         if let Some(callee) = value.get("callee").and_then(|k| {
             k.get("object")
                 .and_then(|k| k.get("arguments").and_then(|p| p.as_array()))
         }) {
             for callee_props in callee {
                 if let Some(arg) = callee_props.get("properties").and_then(|p| p.as_array()) {
-                    for data in arg {
-                        let col_name = data
+                    for ast in arg {
+                        let col_name = ast
                             .get("key")
                             .and_then(|k| k.get("name"))
                             .and_then(|n| n.as_str())
                             .map(|s| s.to_string())?;
 
-                        let col_v_type = data
+                        let col_v_type = ast
                             .get("value")
                             .and_then(|v| {
                                 v.get("callee")
@@ -109,15 +110,13 @@ impl<'a> ASTParser<'a> {
                             .map(|s| s.to_string())?;
 
                         // Based on col_v_type, call a function to parse columns
-                        let column = match col_v_type.as_str() {
-                            "array" => self.parse_array_column(col_name, col_v_type, data),
-                            "object" => self.parse_object_column(col_name, col_v_type, data),
-                            "id" => self.parse_id_column(col_v_type, data),
-                            _ => self.parse_default_column(col_name, col_v_type, data),
-                        };
+                        let current_column_token =
+                            self.parse_column_data_types(col_name, col_v_type, ast);
 
-                        if let Some(column) = column {
+                        if let Some(column) = current_column_token {
                             columns.push(column);
+                        } else {
+                            continue;
                         }
                     }
                 }
@@ -127,17 +126,41 @@ impl<'a> ASTParser<'a> {
         Some(columns)
     }
 
-    /// Parses an array column from the AST
-    /// 
-    /// `c_name` is the name of the column
-    /// 
-    /// `c_type` is the type of the column
-    /// 
-    /// `data` is the ast data of the column
-    /// 
+    /// Parse the current column data types and get there ast data depending on what values they contain
+    ///
+    /// `col_type` is the type of the column
+    ///
+    /// `name` is the name of the column
+    ///
+    /// `current_ast` is the ast data of the column
+    ///
     /// Returns the parsed column or None if no column was found
-    fn parse_array_column(&self, c_name: String, c_type: String, data: &Value) -> Option<Column> {
-        if let Some(col_array_type_data) = data
+    fn parse_column_data_types(
+        &self,
+        col_name: String,
+        col_type: String,
+        current_ast: &Value,
+    ) -> Option<Column> {
+        match col_type.as_str() {
+            "array" => self.parse_array_column(col_name, col_type, current_ast),
+            "object" => self.parse_object_column(col_name, col_type, current_ast),
+            "id" => self.parse_id_column(col_type, current_ast),
+            "optional" => self.parse_optional_column(col_name, col_type, current_ast),
+            _ => self.parse_default_column(col_name, col_type, current_ast),
+        }
+    }
+
+    /// Parses an array column from the AST
+    ///
+    /// `c_name` is the name of the column
+    ///
+    /// `c_type` is the type of the column
+    ///
+    /// `data` is the ast data of the column
+    ///
+    /// Returns the parsed column or None if no column was found
+    fn parse_array_column(&self, c_name: String, c_type: String, ast: &Value) -> Option<Column> {
+        if let Some(col_array_type_data) = ast
             .get("value")
             .and_then(|v| v.get("arguments"))
             .and_then(|a| a.as_array())
@@ -157,7 +180,8 @@ impl<'a> ASTParser<'a> {
                         Type::from_str(
                             &c_type,
                             None,
-                            Some(Type::from_str(&nested_col_type, None, None, None)),
+                            Some(Type::from_str(&nested_col_type, None, None, None, None)),
+                            None,
                             None,
                         )
                     },
@@ -171,18 +195,18 @@ impl<'a> ASTParser<'a> {
     }
 
     /// Parses an object column from the AST
-    /// 
+    ///
     /// `c_name` is the name of the column
-    /// 
+    ///
     /// `c_type` is the type of the column
-    /// 
+    ///
     /// `data` is the ast data of the column
-    /// 
+    ///
     /// Returns the parsed column or None if no column was found
-    fn parse_object_column(&self, c_name: String, c_type: String, data: &Value) -> Option<Column> {
+    fn parse_object_column(&self, c_name: String, c_type: String, ast: &Value) -> Option<Column> {
         let mut object_type_map: HashMap<String, Type> = HashMap::new();
 
-        if let Some(col_object_args) = data
+        if let Some(col_object_args) = ast
             .get("value")
             .and_then(|v| v.get("arguments"))
             .and_then(|a| a.as_array())
@@ -213,7 +237,7 @@ impl<'a> ASTParser<'a> {
                         //     value
                         // );
 
-                        object_type_map.insert(key, Type::from_str(&value, None, None, None));
+                        object_type_map.insert(key, Type::from_str(&value, None, None, None, None));
                     }
                 }
             }
@@ -221,7 +245,7 @@ impl<'a> ASTParser<'a> {
             // create the column
             let column = Column {
                 name: c_name,
-                col_type: { Type::from_str(&c_type, None, None, Some(object_type_map)) },
+                col_type: { Type::from_str(&c_type, None, None, Some(object_type_map), None) },
             };
 
             return Some(column);
@@ -231,22 +255,22 @@ impl<'a> ASTParser<'a> {
     }
 
     /// Parses an id column from the AST
-    /// 
+    ///
     /// `c_type` is the type of the column
-    /// 
+    ///
     /// `data` is the ast data of the column
-    /// 
+    ///
     /// Returns the parsed column or None if no column was found
-    fn parse_id_column(&self, c_type: String, data: &Value) -> Option<Column> {
+    fn parse_id_column(&self, c_type: String, ast: &Value) -> Option<Column> {
         // get the name of the table that the id references
-        let col_name = data
+        let col_name = ast
             .get("key")
             .and_then(|k| k.get("name"))
             .and_then(|n| n.as_str())
             .unwrap()
             .to_string();
 
-        if let Some(id_args) = data
+        if let Some(id_args) = ast
             .get("value")
             .and_then(|c| c.get("arguments"))
             .and_then(|c| c.as_array())
@@ -262,7 +286,7 @@ impl<'a> ASTParser<'a> {
                 // create the column
                 let column = Column {
                     name: col_name.clone(),
-                    col_type: { Type::from_str(&c_type, Some(id_arg_name), None, None) },
+                    col_type: { Type::from_str(&c_type, Some(id_arg_name), None, None, None) },
                 };
 
                 return Some(column);
@@ -271,21 +295,132 @@ impl<'a> ASTParser<'a> {
         None
     }
 
-    /// Parses all other columns from the AST
-    /// 
-    /// These are basic types that don't have deep nesting (strings, numbers, booleans, etc)
-    /// 
+    /// Parses an optional column from the AST
+    ///
+    /// Returns the parsed column or None if no column was found
+    fn parse_optional_column(&self, c_name: String, c_type: String, ast: &Value) -> Option<Column> {
+        println!("Column type: {}", c_type);
+        // println!("Column ast: {}", serde_json::to_string_pretty(ast).unwrap());
+
+        // Because optional types can store any type of data, we need to get the type of data that the optional type stores, and then
+        // do extra parsing depending on what type of data it is.
+        if let Some(args) = ast
+            .get("value")
+            .and_then(|v| v.get("arguments"))
+            .and_then(|a| a.as_array())
+        {
+            for arg in args {
+                let arg_type = arg
+                    .get("callee")
+                    .and_then(|p| p.get("property"))
+                    .and_then(|p| p.get("name"))
+                    .and_then(|n| n.as_str())
+                    .unwrap()
+                    .to_string();
+
+                // Get the valid nested values.
+                // its important to pass the `ast` and not arg ast as we need each column to have the same base ast data to work with.
+                if arg_type == "array" {
+                    let col_metadata =
+                        self.parse_optional_array_column(c_name.clone(), arg_type, ast);
+
+                    let column = Column {
+                        name: c_name.clone(),
+                        col_type: { Type::from_str(&c_type, None, None, None, col_metadata) },
+                    };
+
+                    return Some(column);
+                }
+
+                if arg_type == "object" {
+                    // self.parse_optional_object_column(c_name, c_type, arg)
+                    todo!("Optional object column parsing")
+                }
+
+                let column = Column {
+                    name: c_name.clone(),
+                    col_type: {
+                        Type::from_str(
+                            &c_type,
+                            None,
+                            None,
+                            None,
+                            Some(Type::from_str(&arg_type, None, None, None, None)),
+                        )
+                    },
+                };
+
+                return Some(column);
+            }
+        }
+
+        None
+    }
+
+    /// Parses an optional array column from the AST
+    ///
     /// `c_name` is the name of the column
-    /// 
+    ///
     /// `c_type` is the type of the column
-    /// 
+    ///
+    /// `ast` is the ast data of the column
+    ///
+    /// Returns the parsed column or None if no column was found
+    fn parse_optional_array_column(
+        &self,
+        c_name: String,
+        c_type: String,
+        ast: &Value,
+    ) -> Option<Type> {
+        // println!("Optional array column ast: {}", serde_json::to_string_pretty(ast).unwrap());
+        // println!("Optional array column type: {}", c_type);
+        if let Some(args) = ast
+            .get("value")
+            .and_then(|v| v.get("arguments"))
+            .and_then(|a| a.as_array())
+        {
+            for arg in args {
+                if let Some(arg_props) = arg.get("arguments").and_then(|a| a.as_array()) {
+                    let nested_col_type = arg_props
+                        .get(0)
+                        .and_then(|c| c.get("callee"))
+                        .and_then(|c| c.get("property"))
+                        .and_then(|p| p.get("name"))
+                        .and_then(|n| n.as_str())
+                        .unwrap()
+                        .to_string();
+
+                    let type_data = Type::from_str(
+                        "array",
+                        None,
+                        Some(Type::from_str(&nested_col_type, None, None, None, None)),
+                        None,
+                        None,
+                    );
+
+                    return Some(type_data);
+                }
+            }
+        }
+
+        None
+    }
+
+    /// Parses all other columns from the AST
+    ///
+    /// These are basic types that don't have deep nesting (strings, numbers, booleans, etc)
+    ///
+    /// `c_name` is the name of the column
+    ///
+    /// `c_type` is the type of the column
+    ///
     /// `data` is the ast data of the column
-    /// 
+    ///
     /// Returns the parsed column or None if no column was found
     fn parse_default_column(&self, c_name: String, c_type: String, data: &Value) -> Option<Column> {
         let column = Column {
             name: c_name,
-            col_type: { Type::from_str(&c_type, None, None, None) },
+            col_type: { Type::from_str(&c_type, None, None, None, None) },
         };
 
         Some(column)

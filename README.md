@@ -69,7 +69,7 @@ A list of things todo in the future for this project.
 - [ ] Add full support for all convex schema types
 - [ ] Add tests
 - [ ] Generate rust code from AST
-- [ ] Add error handling to parser
+- [ ] Add error handling to parser (avoiding unwraps everywhere & passing errors to callers)
 - [ ] Make the cli file paths optional/configurable
 
 ## Contributing

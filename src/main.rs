@@ -35,8 +35,8 @@ fn main() {
     let ret = Parser::new(&allocator, &schema_content, source_type).parse();
 
     if ret.errors.is_empty() {
-        // let ast = serde_json::to_string_pretty(&ret.program).unwrap();
-        let ast = serde_json::to_string(&ret.program).unwrap();
+        let ast = serde_json::to_string_pretty(&ret.program).unwrap();
+        // let ast = serde_json::to_string(&ret.program).unwrap();
 
         // println!("{}", ast);
 

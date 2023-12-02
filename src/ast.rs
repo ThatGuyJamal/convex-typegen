@@ -40,6 +40,7 @@ pub(crate) enum Type {
     Array(Box<Type>),
     Object(HashMap<String, Type>),
     Null,
+    Optional(Box<Type>)
 }
 
 impl Type {
@@ -59,6 +60,7 @@ impl Type {
         table_name: Option<String>,
         array_type: Option<Type>,
         object_type: Option<HashMap<String, Type>>,
+        optional_type: Option<Type>
     ) -> Type {
         match s {
             "id" => {
@@ -88,6 +90,13 @@ impl Type {
                 }
             }
             "null" => Type::Null,
+            "optional" => {
+                if let Some(opt) = optional_type {
+                    Type::Optional(Box::new(opt))
+                } else {
+                    panic!("Optional type is required for optional type")
+                }
+            }
             _ => panic!("Invalid type found in schema."),
         }
     }
