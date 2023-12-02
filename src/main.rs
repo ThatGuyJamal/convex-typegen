@@ -9,13 +9,14 @@
 
 mod ast;
 mod parser;
+mod codegen;
 
 use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use crate::ast::Table;
+use crate::ast::ConvexTable;
 
 use oxc::allocator::Allocator;
 use oxc::parser::Parser;
@@ -43,9 +44,8 @@ fn main() {
         let ast: Value = serde_json::from_str(&ast).unwrap();
 
         let schema = crate::parser::ASTParser::new(&ast).parse();
-        println!("Schema: {:#?}", schema);
 
-        // generate_rust_types(tables);
+        crate::codegen::Builder::new(&schema, None).generate();
 
         println!("Parsed Successfully.");
     } else {
@@ -65,11 +65,4 @@ fn read_file_contents(file_path: &str) -> Result<String, std::io::Error> {
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
     Ok(contents)
-}
-
-/// Generate Rust Types from the AST
-/// 
-/// `tables` is a vector of `Table` AST nodes.
-fn generate_rust_types(tables: Vec<Table>) {
-    todo!()
 }
