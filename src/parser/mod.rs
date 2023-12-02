@@ -1,3 +1,5 @@
+pub mod nested;
+
 use std::collections::HashMap;
 
 use serde_json::Value;
@@ -318,11 +320,13 @@ impl<'a> ASTParser<'a> {
                     .unwrap()
                     .to_string();
 
+                let nested_parser = nested::Parser::new(ast);
+
                 // Get the valid nested values.
                 // its important to pass the `ast` and not arg ast as we need each column to have the same base ast data to work with.
                 if arg_type == "array" {
                     let col_metadata =
-                        self.parse_optional_array_column(c_name.clone(), arg_type, ast);
+                        nested_parser.parse_optional_array_column(c_name.clone(), arg_type, ast);
 
                     let column = Column {
                         name: c_name.clone(),
@@ -351,55 +355,6 @@ impl<'a> ASTParser<'a> {
                 };
 
                 return Some(column);
-            }
-        }
-
-        None
-    }
-
-    /// Parses an optional array column from the AST
-    ///
-    /// `c_name` is the name of the column
-    ///
-    /// `c_type` is the type of the column
-    ///
-    /// `ast` is the ast data of the column
-    ///
-    /// Returns the parsed column or None if no column was found
-    fn parse_optional_array_column(
-        &self,
-        c_name: String,
-        c_type: String,
-        ast: &Value,
-    ) -> Option<Type> {
-        // println!("Optional array column ast: {}", serde_json::to_string_pretty(ast).unwrap());
-        // println!("Optional array column type: {}", c_type);
-        if let Some(args) = ast
-            .get("value")
-            .and_then(|v| v.get("arguments"))
-            .and_then(|a| a.as_array())
-        {
-            for arg in args {
-                if let Some(arg_props) = arg.get("arguments").and_then(|a| a.as_array()) {
-                    let nested_col_type = arg_props
-                        .get(0)
-                        .and_then(|c| c.get("callee"))
-                        .and_then(|c| c.get("property"))
-                        .and_then(|p| p.get("name"))
-                        .and_then(|n| n.as_str())
-                        .unwrap()
-                        .to_string();
-
-                    let type_data = Type::from_str(
-                        "array",
-                        None,
-                        Some(Type::from_str(&nested_col_type, None, None, None, None)),
-                        None,
-                        None,
-                    );
-
-                    return Some(type_data);
-                }
             }
         }
 
