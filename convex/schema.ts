@@ -12,7 +12,13 @@ export default defineSchema({
 		// 	foo: v.number(),
 		// 	bar: v.string(),
 		// }),
-		// post: v.id('posts'),
+		post: v.id('posts'),
 		optional_arr: v.optional(v.array(v.number())),
-	}).index('by_email', ['email']),
+	}),
+	hello: defineTable({
+		data: v.object({
+			foo: v.number(),
+			bar: v.string(),
+		})
+	}),
 });
