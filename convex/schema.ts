@@ -2,6 +2,7 @@
 
 export default defineSchema({
 	users: defineTable({
+		name: v.string(),
 		post: v.id('posts'),
 	}),
 	post: defineTable({

@@ -11,12 +11,14 @@ mod ast;
 mod parser;
 mod codegen;
 
+use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
 use crate::ast::ConvexTable;
+use crate::codegen::SchemeBuilderData;
 
 use oxc::allocator::Allocator;
 use oxc::parser::Parser;
@@ -24,14 +26,14 @@ use oxc::span::SourceType;
 use serde_json::Value;
 
 fn main() {
-    let file = env::args()
+    let schema_ts_file = env::args()
         .nth(1)
         .unwrap_or_else(|| "./convex/schema.ts".to_string());
 
     let allocator = Allocator::default();
-    let source_type = SourceType::from_path(Path::new(&file)).unwrap();
+    let source_type = SourceType::from_path(Path::new(&schema_ts_file)).unwrap();
 
-    let schema_content = read_file_contents(&file).unwrap();
+    let schema_content = read_file_contents(&schema_ts_file).unwrap();
 
     let ret = Parser::new(&allocator, &schema_content, source_type).parse();
 
@@ -45,7 +47,14 @@ fn main() {
 
         let schema = crate::parser::ASTParser::new(&ast).parse();
 
-        crate::codegen::Builder::new(&schema, None).generate();
+        crate::codegen::Builder::new(
+            &SchemeBuilderData {
+                schema,
+                namespaces: HashMap::new(),
+            },
+            None,
+        )
+        .generate();
 
         println!("Parsed Successfully.");
     } else {
@@ -55,10 +64,11 @@ fn main() {
         }
     }
 }
+
 /// Read the contents of a file into a string.
-/// 
+///
 /// `file_path` is the path to the file.
-/// 
+///
 /// Returns a `Result` with the contents of the file as a `String`.
 fn read_file_contents(file_path: &str) -> Result<String, std::io::Error> {
     let mut file = File::open(file_path)?;
