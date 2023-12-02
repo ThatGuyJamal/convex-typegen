@@ -42,8 +42,8 @@ fn main() {
 
         let ast: Value = serde_json::from_str(&ast).unwrap();
 
-        let tables = crate::parser::ASTParser::new(&ast).parse();
-        println!("{:#?}", tables);
+        let schema = crate::parser::ASTParser::new(&ast).parse();
+        println!("Schema: {:#?}", schema);
 
         // generate_rust_types(tables);
 

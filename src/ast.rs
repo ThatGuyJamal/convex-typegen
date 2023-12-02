@@ -28,7 +28,6 @@ pub(crate) struct Column {
 #[derive(Debug)]
 pub(crate) enum Type {
     /// The table Id type
-    Id(String),
     String,
     Int64,
     // f64
@@ -36,10 +35,13 @@ pub(crate) enum Type {
     Bool,
     // Vec<u8>
     Bytes,
+    Null,
+    
+    // * Special types that keep extra checks when parsing
+    Id(String),
+    Object(HashMap<String, Type>),
     // Vec<Type>
     Array(Box<Type>),
-    Object(HashMap<String, Type>),
-    Null,
     Optional(Box<Type>)
 }
 
@@ -56,13 +58,13 @@ impl Type {
     /// 
     /// Returns the matched `Type` enum
     pub(crate) fn from_str(
-        s: &str,
+        input: &str,
         table_name: Option<String>,
         array_type: Option<Type>,
         object_type: Option<HashMap<String, Type>>,
         optional_type: Option<Type>
     ) -> Type {
-        match s {
+        match input {
             "id" => {
                 if let Some(table_name) = table_name {
                     Type::Id(table_name)

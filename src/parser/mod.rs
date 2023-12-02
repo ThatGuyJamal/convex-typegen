@@ -6,6 +6,8 @@ use serde_json::Value;
 
 use crate::ast::{Column, Table, Type};
 
+pub(super) type ConvexSchema = Vec<Vec<Table>>;
+
 /// A parser for the AST
 ///
 /// `ast` is the AST to parse
@@ -25,8 +27,8 @@ impl<'a> ASTParser<'a> {
     }
 
     /// Parses the AST
-    pub(crate) fn parse(&self) -> Vec<Table> {
-        let mut tables = Vec::new();
+    pub(crate) fn parse(&self) -> ConvexSchema {
+        let mut schema = Vec::new();
 
         // Most of the important data in the ast is under all these json objects so we simply parse them and loop through
         // there properties to get the data we need.
@@ -40,8 +42,8 @@ impl<'a> ASTParser<'a> {
                             if let Some(properties) =
                                 arg.get("properties").and_then(|p| p.as_array())
                             {
-                                if let Some(table) = self.parse_table(properties) {
-                                    tables.push(table);
+                                if let Some(table) = self.parse_tables(properties) {
+                                    schema.push(table);
                                 }
                             }
                         }
@@ -50,7 +52,7 @@ impl<'a> ASTParser<'a> {
             }
         }
 
-        tables
+        schema
     }
 
     /// Parses a table from the AST
@@ -58,7 +60,9 @@ impl<'a> ASTParser<'a> {
     /// `properties` is the properties of the table
     ///
     /// Returns the parsed table or None if no table was found
-    fn parse_table(&self, properties: &[Value]) -> Option<Table> {
+    fn parse_tables(&self, properties: &[Value]) -> Option<Vec<Table>> {
+        let mut tables = Vec::new();
+
         for prop in properties {
             let table_name = prop
                 .get("key")
@@ -72,12 +76,15 @@ impl<'a> ASTParser<'a> {
                 vec![]
             };
 
-            return Some(Table {
+            let table = Table {
                 name: table_name,
                 columns,
-            });
+            };
+
+            tables.push(table);
         }
-        None
+
+        Some(tables)
     }
 
     /// Parses the columns of a table from the AST
@@ -88,13 +95,10 @@ impl<'a> ASTParser<'a> {
     fn parse_columns(&self, value: &Value) -> Option<Vec<Column>> {
         let mut columns = Vec::new();
 
-        if let Some(callee) = value.get("callee").and_then(|k| {
-            k.get("object")
-                .and_then(|k| k.get("arguments").and_then(|p| p.as_array()))
-        }) {
-            for callee_props in callee {
-                if let Some(arg) = callee_props.get("properties").and_then(|p| p.as_array()) {
-                    for ast in arg {
+        if let Some(table_data) = value.get("arguments").and_then(|a| a.as_array()) {
+            for table_props in table_data {
+                if let Some(props) = table_props.get("properties").and_then(|p| p.as_array()) {
+                    for ast in props {
                         let col_name = ast
                             .get("key")
                             .and_then(|k| k.get("name"))
@@ -161,6 +165,8 @@ impl<'a> ASTParser<'a> {
     /// `data` is the ast data of the column
     ///
     /// Returns the parsed column or None if no column was found
+    /// 
+    /// todo - support nested objects, arrays, and optional types
     fn parse_array_column(&self, c_name: String, c_type: String, ast: &Value) -> Option<Column> {
         if let Some(col_array_type_data) = ast
             .get("value")
@@ -175,6 +181,8 @@ impl<'a> ASTParser<'a> {
                     .and_then(|n| n.as_str())
                     .unwrap()
                     .to_string();
+
+                println!("Nested col type: {}", nested_col_type);
 
                 let column = Column {
                     name: c_name.clone(),
@@ -205,6 +213,8 @@ impl<'a> ASTParser<'a> {
     /// `data` is the ast data of the column
     ///
     /// Returns the parsed column or None if no column was found
+    /// 
+    /// todo - support nested objects, arrays, and optional types
     fn parse_object_column(&self, c_name: String, c_type: String, ast: &Value) -> Option<Column> {
         let mut object_type_map: HashMap<String, Type> = HashMap::new();
 
@@ -300,6 +310,8 @@ impl<'a> ASTParser<'a> {
     /// Parses an optional column from the AST
     ///
     /// Returns the parsed column or None if no column was found
+    /// 
+    /// todo - support nested objects, and optional types
     fn parse_optional_column(&self, c_name: String, c_type: String, ast: &Value) -> Option<Column> {
         println!("Column type: {}", c_type);
         // println!("Column ast: {}", serde_json::to_string_pretty(ast).unwrap());
@@ -339,6 +351,11 @@ impl<'a> ASTParser<'a> {
                 if arg_type == "object" {
                     // self.parse_optional_object_column(c_name, c_type, arg)
                     todo!("Optional object column parsing")
+                }
+
+                if arg_type == "id" {
+                    // self.parse_optional_id_column(c_name, c_type, arg)
+                    todo!("Optional id column parsing")
                 }
 
                 let column = Column {
