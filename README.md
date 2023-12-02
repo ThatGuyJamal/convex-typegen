@@ -72,6 +72,55 @@ A list of things todo in the future for this project.
 - [ ] Add error handling to parser (avoiding unwraps everywhere & passing errors to callers)
 - [ ] Make the cli file paths optional/configurable
 
+## Known Issues
+
+- Infinite Nesting
+
+Because of the way the data types work, it is possible to have infinite nesting within data-types. This means a user schema can look like:
+```typescript
+import { defineSchema, defineTable } from 'convex/server';
+
+export default defineSchema({
+	user: defineTable({
+		data: v.array(v.array(v.array(v.string()))),
+	}),
+});
+```
+
+However, the problem with the current parser is that im manually checking inside each object and array
+for the type. So if you have a schema like this, it will fail to parse as you get past the second level. I need to find a way to recursively check the types without needing to manually check each level, there should be a way to do this but im not sure how yet. If you have any ideas, please let me know! But for now, the parser will fail if you have any schema that has deep nesting.
+
+Example:
+
+```typescript
+// schema.ts
+import { defineSchema, defineTable } from 'convex/server';
+
+export default defineSchema({
+	willError: defineTable({
+		data: v.array(v.array(v.array(v.string()))),
+		data: v.object({
+			foo: v.string(),
+			bar: v.array(v.string())
+		})
+	}),
+	willWork: defineTable({
+		data: v.array(v.string())
+		data: v.object({
+			foo: v.string(),
+			bar: v.number(),
+		})
+		data: v.array(v.object({
+			foo: v.string(),
+			bar: v.number(),
+		})),
+		data: v.optional(v.array(v.number())),
+	})
+});
+```
+
+Again, im sure theres a smarter way to do parse an AST, however im still learning rust and teaching myself about AST parsing so until I find a solution, this is the best I can do. Convex themselves to advise against deep nesting, so this should not be a problem for most people hopefully.
+
 ## Contributing
 
 If you would like to contribute to this project, please feel free to fork and
