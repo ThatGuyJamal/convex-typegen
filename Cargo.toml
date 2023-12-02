@@ -1,5 +1,10 @@
 [package]
-name = "convex-parser"
+name = "convex-typegen"
+description = "A tool for generating Rust types from ConvexDB schema files"
+authors = ["ThatGuyJamal"]
+license = "MIT"
+repository = "https://github.com/ThatGuyJamal/convex-typegen"
+keywords = []
 version = "0.0.1"
 edition = "2021"
 

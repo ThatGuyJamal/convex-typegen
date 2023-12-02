@@ -56,7 +56,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "convex-parser"
+name = "convex-typegen"
 version = "0.0.1"
 dependencies = [
  "oxc",
