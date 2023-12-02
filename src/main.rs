@@ -1,6 +1,7 @@
-// #![allow(dead_code)]
-// #![allow(unused_imports)]
-// #![allow(unused_variables)]
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_variables)]
+#![allow(unused_mut)]
 
 // A Rust Type Generator for the ConvexDB Schema
 //
@@ -10,19 +11,12 @@
 mod ast;
 mod codegen;
 mod parser;
+mod utils;
 
-use std::collections::HashMap;
 use std::env;
-use std::fs::File;
-use std::io::Read;
-use std::path::Path;
+use std::time::Instant;
 
-use oxc::allocator::Allocator;
-use oxc::parser::Parser;
-use oxc::span::SourceType;
-use serde_json::Value;
-
-use crate::codegen::SchemeBuilderData;
+use utils::create_ast;
 
 // example user of our library
 fn main() {
@@ -31,48 +25,18 @@ fn main() {
 
 // The only function exported from the library. (+Types)
 pub fn generate_types() {
+    let start_time = Instant::now();
+
     let schema_ts_file = env::args()
         .nth(1)
         .unwrap_or_else(|| "./convex/schema.ts".to_string());
 
-    let allocator = Allocator::default();
-    let source_type = SourceType::from_path(Path::new(&schema_ts_file)).unwrap();
+    let ast = create_ast(&schema_ts_file).unwrap();
 
-    let schema_content = read_file_contents(&schema_ts_file).unwrap();
+    let schema = crate::parser::ASTParser::new(&ast).parse();
 
-    let ret = Parser::new(&allocator, &schema_content, source_type).parse();
+    crate::codegen::Builder::new(schema, None).generate();
 
-    if ret.errors.is_empty() {
-        let ast = serde_json::to_string_pretty(&ret.program).unwrap();
-        // let ast = serde_json::to_string(&ret.program).unwrap();
-
-        // println!("{}", ast);
-
-        let ast: Value = serde_json::from_str(&ast).unwrap();
-
-        let schema = crate::parser::ASTParser::new(&ast).parse();
-
-        crate::codegen::Builder::new(
-            &SchemeBuilderData {
-                schema,
-                namespaces: HashMap::new(),
-            },
-            None,
-        )
-        .generate();
-
-        println!("Parsed Successfully.");
-    } else {
-        for error in ret.errors {
-            let error = error.with_source_code(schema_content.clone());
-            println!("{error:?}");
-        }
-    }
-}
-
-fn read_file_contents(file_path: &str) -> Result<String, std::io::Error> {
-    let mut file = File::open(file_path)?;
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)?;
-    Ok(contents)
+    let elapsed = start_time.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
 }

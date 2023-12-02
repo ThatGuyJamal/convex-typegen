@@ -1,6 +1,6 @@
-use std::{path::PathBuf, collections::{HashSet, HashMap}};
+use std::path::PathBuf;
 
-use crate::parser::ConvexSchema;
+use crate::ast::ConvexSchema;
 
 /// Custom config options for the code generator
 #[derive(Debug)]
@@ -18,31 +18,24 @@ impl Default for BuilderConfig {
 }
 
 #[derive(Debug)]
-pub(crate) struct SchemeBuilderData {
+pub(crate) struct Builder {
     pub(crate) schema: ConvexSchema,
-    /// Contains the namespace of the table and the name of the convex function.
-    /// For example: users.ts -> create -> will be stored as key: users, value: [create]
-    pub(crate) namespaces: HashMap<String, HashSet<String>>,
-}
-
-#[derive(Debug)]
-pub(crate) struct Builder<'a> {
-    pub(crate) data: &'a SchemeBuilderData,
     pub(crate) config: BuilderConfig,
 }
 
-impl<'a> Builder<'a> {
-    pub(crate) fn new(data: &'a SchemeBuilderData, config: Option<BuilderConfig>) -> Self {
+impl Builder {
+    pub(crate) fn new(schema: ConvexSchema, config: Option<BuilderConfig>) -> Self {
         if let Some(config) = config {
-            Self { data, config }
+            Self { schema, config }
         } else {
-            Self { data, config: BuilderConfig::default() }
+            Self {
+                schema,
+                config: BuilderConfig::default(),
+            }
         }
     }
 
     pub(crate) fn generate(&self) {
-        for table in self.data.schema.iter() {
-            println!("Table: {:#?}", table);
-        }
+        
     }
 }

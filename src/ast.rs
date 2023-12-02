@@ -1,3 +1,12 @@
+use std::collections::{HashMap, HashSet};
+
+/// The parsed schema from schema.ts
+#[derive(Debug)]
+pub(super) struct ConvexSchema {
+    pub(crate) tables: Vec<ConvexTable>,
+    pub(crate) functions: ConvexFunctions,
+}
+
 /// A table in the schema
 #[derive(Debug)]
 pub(crate) struct ConvexTable {
@@ -6,9 +15,6 @@ pub(crate) struct ConvexTable {
 }
 
 /// A convex database function
-pub(crate) struct ConvexFunction {
-    /// The file the function is defined in
-    pub(crate) namespace: String,
-    /// The name of the function itself
-    pub(crate) name: String,
-}
+/// Contains the namespace of the table and the name of the convex function.
+/// For example: users.ts -> create -> will be stored as key: users, value: [create]
+pub(crate) type ConvexFunctions = HashMap<String, HashSet<String>>;

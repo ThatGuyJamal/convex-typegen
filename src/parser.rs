@@ -1,19 +1,17 @@
 // pub mod nested;
 
-use std::fs::File;
-use std::io::Read;
 use serde_json::Value;
+use std::collections::{HashMap, HashSet};
 
-use crate::ast::ConvexTable;
-
-pub(super) type ConvexSchema = Vec<ConvexTable>;
+use crate::ast::{ConvexFunctions, ConvexSchema, ConvexTable};
+use crate::utils::{create_ast, create_debug_json, read_file_contents};
 
 /// A parser for the AST
 ///
 /// `ast` is the AST to parse
 #[derive(Debug)]
 pub(crate) struct ASTParser<'a> {
-    ast: &'a Value
+    ast: &'a Value,
 }
 
 impl<'a> ASTParser<'a> {
@@ -22,16 +20,16 @@ impl<'a> ASTParser<'a> {
     /// `ast` is the AST to parse
     ///
     /// Returns the created ASTParser
-    pub(crate) fn new(ast: &'a Value,) -> Self {
+    pub(crate) fn new(ast: &'a Value) -> Self {
         Self { ast }
     }
 
     /// Parses the AST
     pub(crate) fn parse(&self) -> ConvexSchema {
-        let mut schema = Vec::new();
+        let mut tables = Vec::new();
+        let mut functions: ConvexFunctions = HashMap::new();
 
-        // Most of the important data in the ast is under all these json objects so we simply parse them and loop through
-        // there properties to get the data we need.
+        // First we need to get all the table names, we will assume all the related functions will be under the same file name
         if let Some(body) = self.ast.get("body").and_then(|b| b.as_array()) {
             for item in body {
                 if let Some(export_default) = item.get("declaration") {
@@ -43,7 +41,7 @@ impl<'a> ASTParser<'a> {
                                 arg.get("properties").and_then(|p| p.as_array())
                             {
                                 if let Some(table) = self.parse_tables(properties) {
-                                    schema.extend(table)
+                                    tables.extend(table);
                                 }
                             }
                         }
@@ -52,7 +50,48 @@ impl<'a> ASTParser<'a> {
             }
         }
 
-        schema
+        // remove just for debugging
+        tables.remove(1);
+
+        // Now we need to get all the functions from the table files.
+        // We will assume that the functions are exported as default
+        for table in tables.iter() {
+            let file_name = format!("{}.ts", table.name);
+            let file_path = format!("./convex/{}", file_name);
+
+            let file_ast: Value = create_ast(&file_path).unwrap();
+
+            // create a function set for the table
+            functions.insert(table.name.clone(), HashSet::new());
+
+            // We get the function declarations from the file
+            if let Some(body) = file_ast.get("body").and_then(|b| b.as_array()) {
+                for b in body {
+                    // because there are multiple declaration objects in the same body, we map over them and process them individually
+                    // This code will run twice for each declaration in the map
+                    if let Some(declaration) = b.as_object().and_then(|o| o.get("declaration")) {
+                        // Inside each declaration we get the declarations array
+                        if let Some(declarations) =
+                            declaration.get("declarations").and_then(|d| d.as_array())
+                        {
+                            // We iterate over the declarations and get the function name
+                            for d in declarations {
+                                if let Some(func_name) = d.get("id").and_then(|i| i.get("kind")).and_then(|k| k.get("name")) {
+                                    let name = func_name.as_str().unwrap().to_string();
+                                    let namespace = table.name.clone();
+                                    functions.get_mut(&namespace).unwrap().insert(name);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        println!("Tables: {:#?}", tables);
+        println!("Functions: {:#?}", functions);
+
+        ConvexSchema { tables, functions }
     }
 
     /// Parses a table from the AST
@@ -76,17 +115,5 @@ impl<'a> ASTParser<'a> {
         }
 
         Some(tables)
-    }
-
-    /// Read the contents of a file into a string.
-    ///
-    /// `file_path` is the path to the file.
-    ///
-    /// Returns a `Result` with the contents of the file as a `String`.
-    fn read_file_contents(&self, file_path: &str) -> Result<String, std::io::Error> {
-        let mut file = File::open(file_path)?;
-        let mut contents = String::new();
-        file.read_to_string(&mut contents)?;
-        Ok(contents)
     }
 }
