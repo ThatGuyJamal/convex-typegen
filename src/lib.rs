@@ -25,6 +25,7 @@
 //!      Err(e) => {
 //!       panic!("Error: {:?}", e);
 //!    }
+//!   }
 //! }
 //! ```
 //! 
@@ -68,19 +69,9 @@ pub struct Configuration
     pub code_gen_path: String,
 }
 
-/// Generate the types for the schema.ts file
+/// Generate the types for the convex project.
 ///
 /// `config` is an optional configuration for the type generator
-///
-/// # Example
-/// ```rust
-/// use convex_typegen::generate_types;
-///
-/// fn main()
-/// {
-///     generate_types(None);
-/// }
-/// ```
 pub fn generate_convex_types(config: Option<&Configuration>) -> std::io::Result<()>
 {
     let start_time = Instant::now();
