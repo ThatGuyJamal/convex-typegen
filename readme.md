@@ -1,6 +1,6 @@
 # Convex TypeGen
 
-The [ConvexDB]() Type Generator is a tool for generating the convex [schema.ts]() into rust types. I created this project
+The [ConvexDB](https://www.convex.dev) Type Generator is a tool for generating the convex [schema.ts](https://docs.convex.dev/database/schemas) into rust types. I created this project
 because for backend work, I love rust more than typescript, and I wanted to be able to use the convex schema in rust.
 
 So I hope anyone using this library find it helpful. Im always open to adding more features but for now, the main goal is
