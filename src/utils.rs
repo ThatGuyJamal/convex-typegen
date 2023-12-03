@@ -26,15 +26,28 @@ pub(super) fn read_file_contents(file_path: &str) -> Result<String, std::io::Err
 pub(super) fn create_ast(file: &str) -> Result<Value, Vec<Report>>
 {
     let allocator = Allocator::default();
-    let source_type = SourceType::from_path(Path::new(&file)).unwrap();
-    let schema_content = read_file_contents(file).unwrap();
+
+    let source_type = SourceType::from_path(Path::new(&file))
+        .unwrap_or_else(|err| panic!("Failed to determine source type for file: {}. Error: {:#?}", file, err));
+
+    let schema_content =
+        read_file_contents(file).unwrap_or_else(|e| panic!("Failed to read file contents for file: {}\nError: {}", file, e));
+
     let ret = Parser::new(&allocator, &schema_content, source_type).parse();
 
     if ret.errors.is_empty() {
-        let program = serde_json::to_string_pretty(&ret.program).unwrap();
-        // let program: String = serde_json::to_string(&ret.program).unwrap();
+        // let program = serde_json::to_string_pretty(&ret.program).unwrap();
 
-        let ast: Value = serde_json::from_str(&program).unwrap();
+        let program: String = match serde_json::to_string(&ret.program) {
+            Ok(program) => program,
+            Err(e) => {
+                panic!("Failed to convert program to string. Error: {:#?}", e);
+            }
+        };
+
+        let ast: Value = serde_json::from_str(&program).unwrap_or_else(|e| {
+            panic!("Failed to convert program to json. Error: {:#?}", e);
+        });
 
         Ok(ast)
     } else {
@@ -49,31 +62,34 @@ pub(super) fn create_ast(file: &str) -> Result<Value, Vec<Report>>
     }
 }
 
-pub(super) fn create_debug_json(source_file: &str, content: &Value)
+pub(super) fn create_debug_json(source_file: &str, content: &Value) -> Result<(), std::io::Error>
 {
     let file_name = format!("./debug/dev/{}-{}.json", source_file, random_number());
 
-    let mut file = File::create(&file_name).unwrap();
+    let mut file = File::create(&file_name)?;
 
     let content = serde_json::to_string_pretty(content).unwrap();
 
-    file.write_all(content.as_bytes()).unwrap();
+    file.write_all(content.as_bytes())?;
 
     file.flush().unwrap();
 
     println!("Debug file created: {} -> {}", source_file, file_name);
+
+    Ok(())
 }
 
 fn random_number() -> u32
 {
-    let current_time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+    let current_time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_else(|e| panic!("Failed to get current time. Error: {:#?}", e));
     let seed = current_time.as_secs() as u32;
     let mut rng = std::num::Wrapping(seed);
 
     std::thread::sleep(std::time::Duration::from_secs(1));
 
     rng += std::num::Wrapping(1);
-    
 
     rng.0
 }

@@ -29,7 +29,7 @@ impl<'a> ASTParser<'a>
     }
 
     /// Parses the AST
-    pub(crate) fn parse(&self) -> ConvexSchema
+    pub(crate) fn parse(&self) -> Result<ConvexSchema, String>
     {
         let mut tables = Vec::new();
         let mut functions: ConvexFunctions = HashMap::new();
@@ -57,7 +57,12 @@ impl<'a> ASTParser<'a>
             let file_name = format!("{}.ts", table.name);
             let file_path = format!("./convex/{}", file_name);
 
-            let file_ast: Value = create_ast(&file_path).unwrap();
+            let file_ast: Value = match create_ast(&file_path) {
+                Ok(ast) => ast,
+                Err(e) => {
+                    return Err(format!("Error: {:?}", e.iter().map(|e| e.to_string()).collect::<Vec<_>>()));
+                }
+            };
 
             // create a function set for the table
             functions.insert(table.name.clone(), HashSet::new());
@@ -74,9 +79,9 @@ impl<'a> ASTParser<'a>
                             for d in declarations {
                                 if let Some(func_name) = d.get("id").and_then(|i| i.get("kind")).and_then(|k| k.get("name"))
                                 {
-                                    let name = func_name.as_str().unwrap().to_string();
+                                    let name = func_name.as_str().ok_or("Function name is not a string")?.to_string();
                                     let namespace = table.name.clone();
-                                    functions.get_mut(&namespace).unwrap().insert(name);
+                                    functions.get_mut(&namespace).ok_or("Namespace not found")?.insert(name);
                                 }
                             }
                         }
@@ -85,7 +90,7 @@ impl<'a> ASTParser<'a>
             }
         }
 
-        ConvexSchema { tables, functions }
+        Ok(ConvexSchema { tables, functions })
     }
 
     /// Parses a table from the AST

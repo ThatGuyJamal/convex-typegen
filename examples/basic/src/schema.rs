@@ -2,21 +2,21 @@
 // For more information, visit https://github.com/ThatGuyJamal/convex-typegen
 
 pub enum Users {
-    Create,
     Find,
+    Create,
 }
 
 impl Users {
     pub fn to_string(&self) -> &'static str {
         match self {
-            Users::Create => "users:create",
             Users::Find => "users:find",
+            Users::Create => "users:create",
         }
     }
     pub fn from_string(s: &str) -> Option<Self> {
         match s {
-            "users:create" => Some(Users::Create),
             "users:find" => Some(Users::Find),
+            "users:create" => Some(Users::Create),
             _ => None,
         }
     }

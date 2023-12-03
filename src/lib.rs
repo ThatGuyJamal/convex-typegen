@@ -4,40 +4,41 @@
 //!
 //! - Generate Rust types from the ConvexDB schema.ts file
 //! - Build.rs integration
-//! 
+//!
 //! # Example
-//! 
+//!
 //! Create a `build.rs` file in your project root directory and add the following:
 //! ```rust
 //! use convex_typegen::generate_convex_types;
-//! 
+//!
 //! fn main()
 //! {
-//!    println!("cargo:rerun-if-changed=convex/schema.ts");
-//! 
-//!    let config = convex_typegen::Configuration {
-//!     convex_schema_path: String::from("./convex/schema.ts"),
-//!     code_gen_path: String::from("./src/schema.rs"),
-//!    };
-//!    
-//!    match generate_convex_types(Some(&config)) {
-//!      Ok(_) => {}
-//!      Err(e) => {
-//!       panic!("Error: {:?}", e);
-//!    }
-//!   }
+//!     println!("cargo:rerun-if-changed=convex/schema.ts");
+//!
+//!     let config = convex_typegen::Configuration {
+//!         convex_schema_path: String::from("./convex/schema.ts"),
+//!         code_gen_path: String::from("./src/schema.rs"),
+//!     };
+//!
+//!     match generate_convex_types(Some(&config)) {
+//!         Ok(_) => {}
+//!         Err(e) => {
+//!             panic!("Error: {:?}", e);
+//!         }
+//!     }
 //! }
 //! ```
-//! 
+//!
 //! Then you will see a auto-generated `schema.rs` file in your `src` directory.
-//! 
+//!
 //! You can then query the database in a type-safe manner like so:
-//! 
+//!
 //! ```rust
-//! client.query(schema::Users::FindAll.to_string(), maplit::btreemap! {}).await;
+//! client
+//!     .query(schema::Users::FindAll.to_string(), maplit::btreemap! {})
+//!     .await;
 //! ```
 //! You can view the examples folder in the [repository](https://github.com/ThatGuyJamal/convex-typegen/tree/master/examples/basic) for a more detailed example.
-//! 
 
 #![allow(dead_code)]
 #![allow(unused_imports)]
@@ -81,6 +82,11 @@ pub fn generate_convex_types(config: Option<&Configuration>) -> std::io::Result<
         None => String::from("./convex/schema.ts"),
     };
 
+    let code_gen_path = match config {
+        Some(config) => config.code_gen_path.clone(),
+        None => String::from("./src/schema.rs"),
+    };
+
     let ast = match create_ast(&schema_ts_file) {
         Ok(ast) => ast,
         Err(e) => {
@@ -88,9 +94,14 @@ pub fn generate_convex_types(config: Option<&Configuration>) -> std::io::Result<
         }
     };
 
-    let schema = crate::parser::ASTParser::new(&ast).parse();
+    let schema = match crate::parser::ASTParser::new(&ast).parse() {
+        Ok(schema) => schema,
+        Err(e) => {
+            panic!("Error: {:?}", e);
+        }
+    };
 
-    match crate::codegen::Builder::new(schema).generate("./src/schema.rs") {
+    match crate::codegen::Builder::new(schema).generate(&code_gen_path) {
         Ok(_) => {}
         Err(e) => {
             panic!("Error: {:?}", e);
