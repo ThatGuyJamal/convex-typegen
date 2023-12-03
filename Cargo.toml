@@ -7,6 +7,7 @@ license = "MIT"
 repository = "https://github.com/ThatGuyJamal/convex-typegen"
 keywords = []
 readme = "readme.md"
+documentation = "https://docs.rs/convex-typegen/"
 version = "0.0.1"
 edition = "2021"
 
