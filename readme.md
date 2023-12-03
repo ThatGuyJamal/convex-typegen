@@ -70,4 +70,4 @@ client.query(schema::Users::FindAll.to_string(), maplit::btreemap! {}).await;
 
 # Todo
 
-- [] support function argument parsing/type checking (maybe)
+- [ ] support function argument parsing/type checking (maybe)
