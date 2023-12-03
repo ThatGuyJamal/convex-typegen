@@ -31,5 +31,13 @@ async fn main() -> anyhow::Result<()>
 
     println!("Result: {:?}", result);
 
+    let new_post = client.mutation(schema::Posts::Create.to_string(), maplit::btreemap! {
+        "title".into() => "Hello World".into(),
+        "body".into() => "This is a test post".into(),
+        "user_id".into() => "3sx2tezsnsawa05fzhyvevsq9kq80s8".into(),
+    }).await?;
+
+    println!("New Post: {:?}", new_post);
+
     Ok(())
 }

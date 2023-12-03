@@ -6,9 +6,9 @@ export default defineSchema({
 		name: v.string(),
 		post: v.optional(v.array(v.id('posts'))),
 	}),
-	post: defineTable({
+	posts: defineTable({
 		title: v.string(),
 		body: v.string(),
-		userId: v.id('users'),
+		user_id: v.id('users'),
 	}),
 });
