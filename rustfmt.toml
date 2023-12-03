@@ -1,0 +1,14 @@
+max_width = 125
+newline_style = "Unix"
+use_field_init_shorthand = true
+use_try_shorthand = true
+
+# Unstable features below
+brace_style = "AlwaysNextLine"
+comment_width = 100
+format_code_in_doc_comments = true
+format_macro_bodies = true
+format_macro_matchers = true
+format_strings = true
+imports_granularity = "Module"
+group_imports = "StdExternalCrate"

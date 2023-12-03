@@ -2,14 +2,16 @@ use std::collections::{HashMap, HashSet};
 
 /// The parsed schema from schema.ts
 #[derive(Debug)]
-pub(super) struct ConvexSchema {
+pub(super) struct ConvexSchema
+{
     pub(crate) tables: Vec<ConvexTable>,
     pub(crate) functions: ConvexFunctions,
 }
 
 /// A table in the schema
 #[derive(Debug)]
-pub(crate) struct ConvexTable {
+pub(crate) struct ConvexTable
+{
     /// The name of the table
     pub(crate) name: String,
 }
