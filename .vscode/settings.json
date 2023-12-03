@@ -2,7 +2,9 @@
     "cSpell.words": [
         "codegen",
         "convexdb",
+        "funcs",
         "hashbang",
-        "struct"
+        "struct",
+        "typegen"
     ]
 }

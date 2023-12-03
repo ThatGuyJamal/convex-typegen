@@ -50,9 +50,6 @@ impl<'a> ASTParser<'a> {
             }
         }
 
-        // remove just for debugging
-        tables.remove(1);
-
         // Now we need to get all the functions from the table files.
         // We will assume that the functions are exported as default
         for table in tables.iter() {

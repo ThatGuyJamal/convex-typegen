@@ -20,11 +20,11 @@ use utils::create_ast;
 
 // example user of our library
 fn main() {
-    generate_types();
+    generate_types().unwrap();
 }
 
 // The only function exported from the library. (+Types)
-pub fn generate_types() {
+pub fn generate_types() -> std::io::Result<()> {
     let start_time = Instant::now();
 
     let schema_ts_file = env::args()
@@ -35,8 +35,11 @@ pub fn generate_types() {
 
     let schema = crate::parser::ASTParser::new(&ast).parse();
 
-    crate::codegen::Builder::new(schema, None).generate();
+    crate::codegen::Builder::new(schema).generate("./src/schema.rs")?;
 
     let elapsed = start_time.elapsed();
-    println!("Elapsed: {:.2?}", elapsed);
+    
+    println!("Schema Type Generation Completed | Elapsed {:.2?}", elapsed);
+
+    Ok(())
 }
