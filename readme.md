@@ -13,7 +13,7 @@ typescript functions, but I hope to add them in the future.
 cargo install convex-typegen
 ```
 
-## Edit your `Cargo.toml` file
+## Edit your Cargo.toml file
 
 After installing, you need to set the library as a build-dependency in your `Cargo.toml` file.
 
