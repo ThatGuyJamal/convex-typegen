@@ -26,7 +26,7 @@ convex-typegen = "0.0.1"
 
 ## Create a build script
 
-Create a `build.rs`` file in your project root with the following contents:
+Create a `build.rs` file in your project root with the following contents:
 
 ```rust
 use convex_typegen::generate_convex_types;
