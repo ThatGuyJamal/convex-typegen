@@ -1,45 +1,48 @@
-use std::collections::HashMap;
+// pub mod nested;
+
+use std::collections::{HashMap, HashSet};
 
 use serde_json::Value;
 
-use crate::ast::{Column, Table, Type};
+use crate::ast::{ConvexFunctions, ConvexSchema, ConvexTable};
+use crate::utils::{create_ast, create_debug_json, read_file_contents};
 
 /// A parser for the AST
-/// 
+///
 /// `ast` is the AST to parse
 #[derive(Debug)]
-pub(crate) struct ASTParser<'a> {
+pub(crate) struct ASTParser<'a>
+{
     ast: &'a Value,
 }
 
-impl<'a> ASTParser<'a> {
+impl<'a> ASTParser<'a>
+{
     /// Create a new ASTParser
-    /// 
+    ///
     /// `ast` is the AST to parse
-    /// 
+    ///
     /// Returns the created ASTParser
-    pub(crate) fn new(ast: &'a Value) -> Self {
+    pub(crate) fn new(ast: &'a Value) -> Self
+    {
         Self { ast }
     }
 
     /// Parses the AST
-    pub(crate) fn parse(&self) -> Vec<Table> {
+    pub(crate) fn parse(&self) -> Result<ConvexSchema, String>
+    {
         let mut tables = Vec::new();
+        let mut functions: ConvexFunctions = HashMap::new();
 
-        // Most of the important data in the ast is under all these json objects so we simply parse them and loop through
-        // there properties to get the data we need.
+        // First we need to get all the table names, we will assume all the related functions will be under the same file name
         if let Some(body) = self.ast.get("body").and_then(|b| b.as_array()) {
             for item in body {
                 if let Some(export_default) = item.get("declaration") {
-                    if let Some(arguments) =
-                        export_default.get("arguments").and_then(|a| a.as_array())
-                    {
+                    if let Some(arguments) = export_default.get("arguments").and_then(|a| a.as_array()) {
                         for arg in arguments {
-                            if let Some(properties) =
-                                arg.get("properties").and_then(|p| p.as_array())
-                            {
-                                if let Some(table) = self.parse_table(properties) {
-                                    tables.push(table);
+                            if let Some(properties) = arg.get("properties").and_then(|p| p.as_array()) {
+                                if let Some(table) = self.parse_tables(properties) {
+                                    tables.extend(table);
                                 }
                             }
                         }
@@ -48,246 +51,69 @@ impl<'a> ASTParser<'a> {
             }
         }
 
-        tables
-    }
+        // Now we need to get all the functions from the table files.
+        // We will assume that the functions are exported as default
+        for table in tables.iter() {
+            let file_name = format!("{}.ts", table.name);
+            let file_path = format!("./convex/{}", file_name);
 
-    /// Parses a table from the AST
-    /// 
-    /// `properties` is the properties of the table
-    /// 
-    /// Returns the parsed table or None if no table was found
-    fn parse_table(&self, properties: &[Value]) -> Option<Table> {
-        for prop in properties {
-            let table_name = prop
-                .get("key")
-                .and_then(|k| k.get("name"))
-                .and_then(|n| n.as_str())
-                .map(|s| s.to_string())?;
-
-            let columns = if let Some(value) = prop.get("value") {
-                self.parse_columns(value)?
-            } else {
-                vec![]
+            let file_ast: Value = match create_ast(&file_path) {
+                Ok(ast) => ast,
+                Err(e) => {
+                    return Err(format!("Error: {:?}", e.iter().map(|e| e.to_string()).collect::<Vec<_>>()));
+                }
             };
 
-            return Some(Table {
-                name: table_name,
-                columns,
-            });
-        }
-        None
-    }
+            // create a function set for the table
+            functions.insert(table.name.clone(), HashSet::new());
 
-    /// Parses the columns of a table from the AST
-    /// 
-    /// `value` is the value of the table
-    /// 
-    /// Returns the parsed columns or None if no columns were found
-    fn parse_columns(&self, value: &Value) -> Option<Vec<Column>> {
-        let mut columns = Vec::new();
-        if let Some(callee) = value.get("callee").and_then(|k| {
-            k.get("object")
-                .and_then(|k| k.get("arguments").and_then(|p| p.as_array()))
-        }) {
-            for callee_props in callee {
-                if let Some(arg) = callee_props.get("properties").and_then(|p| p.as_array()) {
-                    for data in arg {
-                        let col_name = data
-                            .get("key")
-                            .and_then(|k| k.get("name"))
-                            .and_then(|n| n.as_str())
-                            .map(|s| s.to_string())?;
-
-                        let col_v_type = data
-                            .get("value")
-                            .and_then(|v| {
-                                v.get("callee")
-                                    .and_then(|v| v.get("property"))
-                                    .and_then(|p| p.get("name"))
-                                    .and_then(|n| n.as_str())
-                            })
-                            .map(|s| s.to_string())?;
-
-                        // Based on col_v_type, call a function to parse columns
-                        let column = match col_v_type.as_str() {
-                            "array" => self.parse_array_column(col_name, col_v_type, data),
-                            "object" => self.parse_object_column(col_name, col_v_type, data),
-                            "id" => self.parse_id_column(col_v_type, data),
-                            _ => self.parse_default_column(col_name, col_v_type, data),
-                        };
-
-                        if let Some(column) = column {
-                            columns.push(column);
+            // We get the function declarations from the file
+            if let Some(body) = file_ast.get("body").and_then(|b| b.as_array()) {
+                for b in body {
+                    // because there are multiple declaration objects in the same body, we map over them and process them individually
+                    // This code will run twice for each declaration in the map
+                    if let Some(declaration) = b.as_object().and_then(|o| o.get("declaration")) {
+                        // Inside each declaration we get the declarations array
+                        if let Some(declarations) = declaration.get("declarations").and_then(|d| d.as_array()) {
+                            // We iterate over the declarations and get the function name
+                            for d in declarations {
+                                if let Some(func_name) = d.get("id").and_then(|i| i.get("kind")).and_then(|k| k.get("name"))
+                                {
+                                    let name = func_name.as_str().ok_or("Function name is not a string")?.to_string();
+                                    let namespace = table.name.clone();
+                                    functions.get_mut(&namespace).ok_or("Namespace not found")?.insert(name);
+                                }
+                            }
                         }
                     }
                 }
             }
         }
 
-        Some(columns)
+        Ok(ConvexSchema { tables, functions })
     }
 
-    /// Parses an array column from the AST
-    /// 
-    /// `c_name` is the name of the column
-    /// 
-    /// `c_type` is the type of the column
-    /// 
-    /// `data` is the ast data of the column
-    /// 
-    /// Returns the parsed column or None if no column was found
-    fn parse_array_column(&self, c_name: String, c_type: String, data: &Value) -> Option<Column> {
-        if let Some(col_array_type_data) = data
-            .get("value")
-            .and_then(|v| v.get("arguments"))
-            .and_then(|a| a.as_array())
-        {
-            for cad in col_array_type_data {
-                let nested_col_type = cad
-                    .get("callee")
-                    .and_then(|c| c.get("property"))
-                    .and_then(|c| c.get("name"))
-                    .and_then(|n| n.as_str())
-                    .unwrap()
-                    .to_string();
+    /// Parses a table from the AST
+    ///
+    /// `properties` is the properties of the table
+    ///
+    /// Returns the parsed table or None if no table was found
+    fn parse_tables(&self, properties: &[Value]) -> Option<Vec<ConvexTable>>
+    {
+        let mut tables = Vec::new();
 
-                let column = Column {
-                    name: c_name.clone(),
-                    col_type: {
-                        Type::from_str(
-                            &c_type,
-                            None,
-                            Some(Type::from_str(&nested_col_type, None, None, None)),
-                            None,
-                        )
-                    },
-                };
+        for prop in properties {
+            let t_name = prop
+                .get("key")
+                .and_then(|k| k.get("name"))
+                .and_then(|n| n.as_str())
+                .map(|s| s.to_string())?;
 
-                return Some(column);
-            }
+            let table = ConvexTable { name: t_name };
+
+            tables.push(table);
         }
 
-        None
-    }
-
-    /// Parses an object column from the AST
-    /// 
-    /// `c_name` is the name of the column
-    /// 
-    /// `c_type` is the type of the column
-    /// 
-    /// `data` is the ast data of the column
-    /// 
-    /// Returns the parsed column or None if no column was found
-    fn parse_object_column(&self, c_name: String, c_type: String, data: &Value) -> Option<Column> {
-        let mut object_type_map: HashMap<String, Type> = HashMap::new();
-
-        if let Some(col_object_args) = data
-            .get("value")
-            .and_then(|v| v.get("arguments"))
-            .and_then(|a| a.as_array())
-        {
-            for arg_props in col_object_args {
-                if let Some(nested_props) = arg_props.get("properties").and_then(|a| a.as_array()) {
-                    for arg in nested_props {
-                        let key = arg
-                            .get("key")
-                            .and_then(|k| k.get("name"))
-                            .and_then(|n| n.as_str())
-                            .unwrap()
-                            .to_string();
-
-                        // println!("Key: {}", key);
-
-                        let value = arg
-                            .get("value")
-                            .and_then(|v| v.get("callee"))
-                            .and_then(|p| p.get("property"))
-                            .and_then(|n| n.get("name"))
-                            .and_then(|n| n.as_str())
-                            .unwrap()
-                            .to_string();
-
-                        // println!(
-                        //     "Value: {}",
-                        //     value
-                        // );
-
-                        object_type_map.insert(key, Type::from_str(&value, None, None, None));
-                    }
-                }
-            }
-
-            // create the column
-            let column = Column {
-                name: c_name,
-                col_type: { Type::from_str(&c_type, None, None, Some(object_type_map)) },
-            };
-
-            return Some(column);
-        }
-
-        None
-    }
-
-    /// Parses an id column from the AST
-    /// 
-    /// `c_type` is the type of the column
-    /// 
-    /// `data` is the ast data of the column
-    /// 
-    /// Returns the parsed column or None if no column was found
-    fn parse_id_column(&self, c_type: String, data: &Value) -> Option<Column> {
-        // get the name of the table that the id references
-        let col_name = data
-            .get("key")
-            .and_then(|k| k.get("name"))
-            .and_then(|n| n.as_str())
-            .unwrap()
-            .to_string();
-
-        if let Some(id_args) = data
-            .get("value")
-            .and_then(|c| c.get("arguments"))
-            .and_then(|c| c.as_array())
-        {
-            for id_arg in id_args {
-                // get the name of the id argument
-                let id_arg_name = id_arg
-                    .get("value")
-                    .and_then(|n| n.as_str())
-                    .unwrap()
-                    .to_string();
-
-                // create the column
-                let column = Column {
-                    name: col_name.clone(),
-                    col_type: { Type::from_str(&c_type, Some(id_arg_name), None, None) },
-                };
-
-                return Some(column);
-            }
-        }
-        None
-    }
-
-    /// Parses all other columns from the AST
-    /// 
-    /// These are basic types that don't have deep nesting (strings, numbers, booleans, etc)
-    /// 
-    /// `c_name` is the name of the column
-    /// 
-    /// `c_type` is the type of the column
-    /// 
-    /// `data` is the ast data of the column
-    /// 
-    /// Returns the parsed column or None if no column was found
-    fn parse_default_column(&self, c_name: String, c_type: String, data: &Value) -> Option<Column> {
-        let column = Column {
-            name: c_name,
-            col_type: { Type::from_str(&c_type, None, None, None) },
-        };
-
-        Some(column)
+        Some(tables)
     }
 }
