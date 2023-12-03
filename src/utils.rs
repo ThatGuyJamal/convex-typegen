@@ -27,7 +27,7 @@ pub(super) fn create_ast(file: &str) -> Result<Value, Vec<Report>>
 {
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(Path::new(&file)).unwrap();
-    let schema_content = read_file_contents(&file).unwrap();
+    let schema_content = read_file_contents(file).unwrap();
     let ret = Parser::new(&allocator, &schema_content, source_type).parse();
 
     if ret.errors.is_empty() {
@@ -45,7 +45,7 @@ pub(super) fn create_ast(file: &str) -> Result<Value, Vec<Report>>
             reports.push(error);
         }
 
-        return Err(reports);
+        Err(reports)
     }
 }
 
@@ -73,9 +73,9 @@ fn random_number() -> u32
     std::thread::sleep(std::time::Duration::from_secs(1));
 
     rng += std::num::Wrapping(1);
-    let random_number = rng.0;
+    
 
-    random_number
+    rng.0
 }
 
 #[cfg(test)]

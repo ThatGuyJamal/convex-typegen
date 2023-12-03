@@ -40,19 +40,19 @@ impl Builder
                 let enum_name = self.capitalize_first_char(&table.name);
                 code.push_str(&format!("pub enum {} {{\n", enum_name));
                 for func in funcs {
-                    code.push_str(&format!("    {},\n", self.capitalize_first_char(&func)));
+                    code.push_str(&format!("    {},\n", self.capitalize_first_char(func)));
                 }
                 code.push_str("}\n\n");
 
                 // Generating impl block for enum to string conversion
                 code.push_str(&format!("impl {} {{\n", enum_name));
-                code.push_str(&format!("    pub fn to_string(&self) -> &'static str {{\n"));
+                code.push_str("    pub fn to_string(&self) -> &'static str {\n");
                 code.push_str("        match self {\n");
                 for func in funcs {
                     code.push_str(&format!(
                         "            {}::{} => \"{}:{}\",\n",
                         enum_name,
-                        self.capitalize_first_char(&func),
+                        self.capitalize_first_char(func),
                         &table.name,
                         &func
                     ));
@@ -61,7 +61,7 @@ impl Builder
                 code.push_str("    }\n");
 
                 // Generating string to enum conversion
-                code.push_str(&format!("    pub fn from_string(s: &str) -> Option<Self> {{\n"));
+                code.push_str("    pub fn from_string(s: &str) -> Option<Self> {\n");
                 code.push_str("        match s {\n");
                 for func in funcs {
                     code.push_str(&format!(
@@ -69,7 +69,7 @@ impl Builder
                         &table.name,
                         &func,
                         enum_name,
-                        self.capitalize_first_char(&func)
+                        self.capitalize_first_char(func)
                     ));
                 }
                 code.push_str("            _ => None,\n");
