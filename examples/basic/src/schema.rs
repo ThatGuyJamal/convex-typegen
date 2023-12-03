@@ -22,21 +22,21 @@ impl Users {
     }
 }
 pub enum Post {
-    Find,
     Create,
+    Find,
 }
 
 impl Post {
     pub fn to_string(&self) -> &'static str {
         match self {
-            Post::Find => "post:find",
             Post::Create => "post:create",
+            Post::Find => "post:find",
         }
     }
     pub fn from_string(s: &str) -> Option<Self> {
         match s {
-            "post:find" => Some(Post::Find),
             "post:create" => Some(Post::Create),
+            "post:find" => Some(Post::Find),
             _ => None,
         }
     }

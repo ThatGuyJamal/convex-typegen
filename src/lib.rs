@@ -1,3 +1,43 @@
+//! Convex Type Generator
+//!
+//! # Features
+//!
+//! - Generate Rust types from the ConvexDB schema.ts file
+//! - Build.rs integration
+//! 
+//! # Example
+//! 
+//! Create a `build.rs` file in your project root directory and add the following:
+//! ```rust
+//! use convex_typegen::generate_convex_types;
+//! 
+//! fn main()
+//! {
+//!    println!("cargo:rerun-if-changed=convex/schema.ts");
+//! 
+//!    let config = convex_typegen::Configuration {
+//!     convex_schema_path: String::from("./convex/schema.ts"),
+//!     code_gen_path: String::from("./src/schema.rs"),
+//!    };
+//!    
+//!    match generate_convex_types(Some(&config)) {
+//!      Ok(_) => {}
+//!      Err(e) => {
+//!       panic!("Error: {:?}", e);
+//!    }
+//! }
+//! ```
+//! 
+//! Then you will see a auto-generated `schema.rs` file in your `src` directory.
+//! 
+//! You can then query the database in a type-safe manner like so:
+//! 
+//! ```rust
+//! client.query(schema::Users::FindAll.to_string(), maplit::btreemap! {}).await;
+//! ```
+//! You can view the examples folder in the [repository](https://github.com/ThatGuyJamal/convex-typegen/tree/master/examples/basic) for a more detailed example.
+//! 
+
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(unused_variables)]
