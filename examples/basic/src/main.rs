@@ -13,9 +13,15 @@ async fn main() -> anyhow::Result<()>
         }
     };
 
-    let result = match client.query(schema::Users::Find.to_string(), maplit::btreemap! {
-        "id".into() => "3sx2tezsnsawa05fzhyvevsq9kq80s8".into()
-    }).await {
+    let result = match client
+        .query(
+            schema::Users::Find.to_string(),
+            maplit::btreemap! {
+                "id".into() => "3sx2tezsnsawa05fzhyvevsq9kq80s8".into()
+            },
+        )
+        .await
+    {
         Ok(result) => result,
         Err(e) => {
             println!("Error: {:?}", e);
