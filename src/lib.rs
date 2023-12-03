@@ -38,7 +38,7 @@
 //!     .query(schema::Users::FindAll.to_string(), maplit::btreemap! {})
 //!     .await;
 //! ```
-//! You can view the examples folder in the [repository](https://github.com/ThatGuyJamal/convex-typegen/tree/master/examples/basic) for a more detailed example.
+//! You can view the examples folder in the [repository](https://github.com/ThatGuyJamal/convex-typegen/tree/master/examples) for a more detailed example.
 
 #![allow(dead_code)]
 #![allow(unused_imports)]
