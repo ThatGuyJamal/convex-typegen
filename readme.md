@@ -24,9 +24,9 @@ convex-typegen = "0.0.1"
 
 *Change to the latest version if needed*
 
-## Create a `convex` directory
+## Create a build script
 
-Create a `build.rs` file in your project root with the following contents:
+Create a `build.rs`` file in your project root with the following contents:
 
 ```rust
 use convex_typegen::generate_convex_types;
@@ -52,9 +52,9 @@ fn main()
 ```
 This `build.rs` file will generate the `schema.rs` file in the `src` directory. You can change the path to whatever you want.
 
-## Edit your `main.rs` file
+## Edit your main.rs file
 
-After your schema file is generated, you need to let your `main.rs` file know about it. Add the following line to your `main.rs` file:
+After your schema file is generated, you need to let your `main.rs` file know about it. Add the following line to your main.rs file:
 
 ```rust
 mod schema;
