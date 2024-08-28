@@ -8,7 +8,7 @@
 //! # Example
 //!
 //! Create a `build.rs` file in your project root directory and add the following:
-//! ```rust
+//! ```ignore
 //! use convex_typegen::generate_convex_types;
 //!
 //! fn main()
@@ -33,7 +33,7 @@
 //!
 //! You can then query the database in a type-safe manner like so:
 //!
-//! ```rust
+//! ```ignore
 //! client
 //!     .query(schema::Users::FindAll.to_string(), maplit::btreemap! {})
 //!     .await;
@@ -63,8 +63,7 @@ use utils::create_ast;
 
 /// The configuration for the type generator
 #[derive(Debug)]
-pub struct Configuration
-{
+pub struct Configuration {
     /// A path to your schema file
     pub convex_schema_path: String,
     pub code_gen_path: String,
@@ -73,8 +72,7 @@ pub struct Configuration
 /// Generate the types for the convex project.
 ///
 /// `config` is an optional configuration for the type generator
-pub fn generate_convex_types(config: Option<&Configuration>) -> std::io::Result<()>
-{
+pub fn generate_convex_types(config: Option<&Configuration>) -> std::io::Result<()> {
     let start_time = Instant::now();
 
     let schema_ts_file = match config {
